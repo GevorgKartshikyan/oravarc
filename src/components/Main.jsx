@@ -22,6 +22,7 @@ import {Toast} from "primereact/toast";
 import {MultiSelect} from "primereact/multiselect";
 import dayGridPlugin from '@fullcalendar/daygrid'
 import {SelectButton} from "primereact/selectbutton";
+import {formatEventFileds} from "../helpers/formatEventFileds.js";
 
 function Main({isAdmin, user}) {
     const [loading, setLoading] = useState(true);
@@ -52,7 +53,7 @@ function Main({isAdmin, user}) {
     }, [resources])
     useEffect(() => {
         if (!isAdmin) {
-            const filteredEvents = events.filter(event => +event.PARENT_ID_1036 === +selectedResource.id);
+            const filteredEvents = events.filter(event => +event.UF_CRM_1751522804  === +selectedResource.id);
             setFilteredEvents(filteredEvents);
         }
     }, [selectedResource, isAdmin]);
@@ -62,27 +63,22 @@ function Main({isAdmin, user}) {
         (async () => {
             const allFields = await fetItemsFields();
             const dealUserFields = await getDealUserField();
-            for (const item of dealUserFields) {
-                const res = await getDealUserFieldGet(item.ID);
-                item.title = res.LIST_COLUMN_LABEL?.ru || '';
-            }
-            const allSmartProcess = await fetchAllItems(1036, isAdmin, user);
-            const allDeals = await fetchAllDeals();
+            const allDealsEvents = await fetchAllDeals(0);
+            const allDealsProperty = await fetchAllItems(2,isAdmin,user);
             const allContacts = await fetchAllContacts();
             const allUsers = await getAllUsers();
-            setResources(formatResources(allSmartProcess, allContacts));
-            setAllResources(formatResources(allSmartProcess, allContacts));
-            setEvents(formatEvents(allDeals.filter((e) => e.STAGE_ID !== 'LOSE'), allSmartProcess));
-            setFilteredEvents(formatEvents(allDeals.filter((e) => e.STAGE_ID !== 'LOSE'), allSmartProcess));
+            setResources(formatResources(allDealsProperty, allContacts));
+            setAllResources(formatResources(allDealsProperty, allContacts));
+            setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
+            setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
             setAllUsers(allUsers);
             setSelectedUsers(allUsers);
-            setDealUserFields(dealUserFields);
+            setDealUserFields(formatEventFileds(dealUserFields));
             setAllContacts(allContacts);
             setLoading(false);
             setSmartProcessFields(allFields);
         })();
     }, []);
-
     const handleHideAddModal = () => {
         setAddModalVisible(false);
         setSelectedProduct(null);

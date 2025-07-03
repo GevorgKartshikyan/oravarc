@@ -2,9 +2,12 @@ import axios from "axios";
 
 const REACT_APP_BASE_URL = import.meta.env.VITE_API_URL_BX
 const BATCH_SIZE = 50;
-const fetchDealCount = async () => {
+const fetchDealCount = async (categoryId) => {
     const response = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.list.json`, {
         select: ['ID'],
+        filter: {
+            CATEGORY_ID: categoryId
+        }
     });
     if (response.data.error) {
         throw new Error(response.data.error_description);
@@ -32,8 +35,8 @@ export const getAllUsers = async () => {
         };
     })
 };
-export const fetchAllDeals = async (startDate, endDate) => {
-    const totalLeads = await fetchDealCount(startDate, endDate);
+export const fetchAllDeals = async (categoryId) => {
+    const totalLeads = await fetchDealCount(categoryId);
     let allDeals = [];
     let start = 0;
     while (start < totalLeads) {
@@ -51,9 +54,9 @@ export const fetchAllDeals = async (startDate, endDate) => {
         }
         const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, {
             cmd: batchRequests.reduce((acc, req, idx) => {
-                const select = ["ID", 'TITLE',"UF_*",, "*"];
+                const select = ["ID", 'TITLE',"UF_*",'CATEGORY_ID',"*"];
                 const selectStr = select.map(id => `select[]=${id}`).join('&');
-                acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}`;
+                acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}&filter[CATEGORY_ID]=${categoryId}`;
                 return acc;
             }, {})
         });
@@ -148,7 +151,7 @@ export const addDeal = async (start, end, daysCount,productId,ufs,opportunity,cr
             UF_CRM_1749479687467: end,
             UF_CRM_1749479675960: start,
             UF_CRM_1749539216833: daysCount,
-            PARENT_ID_1036:productId,
+            UF_CRM_1751522804:productId,
             ...ufs,
             OPPORTUNITY:opportunity,
             CONTACT_ID:contact_id,
@@ -195,8 +198,8 @@ export const getDeal = async (id) => {
     return data.result
 }
 export const getDealUserField = async () => {
-    const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.userfield.list`, {
-        // id
+    const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.fields`, {
+        select: ['*','TITLE','NAME']
     })
     return data.result
 }
@@ -207,13 +210,14 @@ export const getDealUserFieldGet = async (id) => {
     return data.result
 }
 const fetchItemsCount = async (entity,isAdmin,user) => {
-    const filter = {};
+    const filter = {
+        CATEGORY_ID: entity
+    };
     if(!isAdmin){
-        filter['contactId'] = user.ID
+        filter['CONTACT_ID'] = user.ID
     }
-    const response = await axios.post(`${REACT_APP_BASE_URL}/crm.item.list.json`, {
-        entityTypeId: entity,
-        select: ['ID','contactId'],
+    const response = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.list.json`, {
+        select: ['ID','CONTACT_ID'],
         filter
     });
 
@@ -227,9 +231,11 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
     let allItems = [];
     let start = 0;
 
-    const filter = {};
+    const filter = {
+        CATEGORY_ID: entity
+    };
     if (!isAdmin) {
-        filter['contactId'] = user.ID;
+        filter['CONTACT_ID'] = user.ID;
     }
 
     while (start < totalItems) {
@@ -242,12 +248,12 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
                 .map(([key, value]) => `filter[${key}]=${value}`)
                 .join('&');
 
-            const select = ["ID", "TITLE", "*"];
+            const select = ["ID", "TITLE", "*",'UF_*'];
             const selectStr = select.map(id => `select[]=${id}`).join('&');
 
             batchRequests.push({
                 key: `req_${i}`,
-                url: `crm.item.list?start=${startIndex}&entityTypeId=${entity}&${filterParams}&${selectStr}`
+                url: `crm.deal.list?start=${startIndex}&${filterParams}&${selectStr}`
             });
         }
 
@@ -262,15 +268,11 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
             throw new Error(batchResponse.data.error_description);
         }
 
-        const result = batchResponse.data.result.result;
-        const groupItems = Object.values(result).reduce((acc, current) => acc.concat(current.items), []);
-
-        allItems = allItems.concat(groupItems);
-
-        if (groupItems.length < requestsNeeded * BATCH_SIZE) {
+        const groupDeals = Object.values(batchResponse.data.result.result).flat();
+        allItems = allItems.concat(groupDeals);
+        if (groupDeals.length < requestsNeeded * BATCH_SIZE) {
             break;
         }
-
         start += requestsNeeded * BATCH_SIZE;
     }
 
@@ -279,7 +281,7 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
 
 export const fetItemsFields = async () => {
     const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.item.fields`, {
-        entityTypeId: 1036,
+        entityTypeId: 2,
     })
     return data.result.fields
 }

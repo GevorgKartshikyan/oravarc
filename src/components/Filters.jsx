@@ -24,9 +24,10 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
     };
 
     const ufOnly = Object.fromEntries(
-        Object.entries(properties).filter(([key]) =>
-            key.toLowerCase().startsWith('uf') || key === 'title' || key === 'opportunity'
-        )
+        Object.entries(properties).filter(([key,value]) =>{
+            console.log(value)
+            return  (key.toLowerCase().startsWith('.uf') && value.filterLabel?.startsWith('.')) || key === 'title' || key === 'opportunity'
+        })
     );
 
     const ufKeys = Object.keys(ufOnly);
