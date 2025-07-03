@@ -3,7 +3,7 @@ export const formatEventFileds = (object) => {
     const result = [];
     keys.forEach((key) => {
         const field = object[key];
-        if (field.title.startsWith('UF_CRM') && !field.filterLabel.startsWith('[')) {
+        if (field.title.startsWith('UF_CRM') && !field.filterLabel.startsWith('.')) {
             result.push({
                 FIELD_NAME:key,
                 USER_TYPE_ID:field.type,

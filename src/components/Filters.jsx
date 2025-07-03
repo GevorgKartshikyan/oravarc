@@ -25,11 +25,9 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
 
     const ufOnly = Object.fromEntries(
         Object.entries(properties).filter(([key,value]) =>{
-            console.log(value)
-            return  (key.toLowerCase().startsWith('.uf') && value.filterLabel?.startsWith('.')) || key === 'title' || key === 'opportunity'
+            return  (key.toLowerCase().startsWith('uf') && value.filterLabel?.startsWith('.')) || key === 'title' || key === 'opportunity'
         })
     );
-
     const ufKeys = Object.keys(ufOnly);
     const handleApply = () => {
         if (!allResources) return;
@@ -110,7 +108,6 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
             settings,
             title
         } = field;
-
         const value = formData[fieldKey];
         if (title.endsWith('-') || title.endsWith('- ')) {
             return null
