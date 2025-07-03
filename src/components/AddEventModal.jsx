@@ -285,6 +285,7 @@ function AddEventModal({
 
                     <div>
                         <Button
+                            disabled={addLoading}
                             loading={addLoading}
                             label="Ամրագրել"
                             icon="pi pi-save"

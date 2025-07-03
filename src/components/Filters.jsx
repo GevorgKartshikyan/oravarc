@@ -38,11 +38,9 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
                 const field = properties[ufKey];
                 const filterValue = formData[ufKey];
                 const dealValue = resource[ufKey];
-
                 if (!field || filterValue == null || filterValue === '' || (Array.isArray(filterValue) && filterValue.length === 0)) {
                     return true;
                 }
-
                 const type = field.type;
                 const isMultiple = field.isMultiple;
 
