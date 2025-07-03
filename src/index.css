@@ -1,0 +1,131 @@
+html {
+  font-size: 14px;
+}
+
+body {
+  font-family: var(--font-family);
+  font-weight: normal;
+  background: var(--surface-ground);
+  color: var(--text-color);
+  /*padding: 1rem;*/
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.card {
+  background: var(--surface-card);
+  padding: 2rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+@keyframes flipHorizontal {
+  0% {
+    transform: rotateY(0deg);
+  }
+  25% {
+    transform: rotateY(90deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+  75% {
+    transform: rotateY(270deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.flip-horizontal {
+  animation: flipHorizontal 2s infinite linear;
+}
+.fc-license-message{
+  display: none;
+}
+@keyframes p-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px 10px rgba(0, 123, 255, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+  }
+}
+
+.p-pulse {
+  animation: p-pulse 2s infinite;
+}
+@media (min-width: 768px) {
+  .fc-timeline-lane.fc-resource {
+    cursor: pointer !important;
+    z-index: 5000000 !important;
+    position: relative;
+  }
+
+  .fc-timeline-lane.fc-resource:hover {
+    background-color: rgba(2, 241, 12, 0.53) !important;
+  }
+}
+.custom-calendar{
+.fc-daygrid-day-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-day .circle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.custom-day .circle.active {
+  background: #fff;
+  color: black;
+  box-shadow: 0 0 0 1px #ccc;
+}
+
+.fc-event {
+  font-size: 0.6rem;
+  background: transparent;
+  color: gray;
+  position: absolute;
+  left: -50px;
+}
+/**/
+.fc .fc-daygrid-event{
+  /*position: relative;*/
+  max-width: 130px !important;
+  overflow: hidden;
+}
+.fc-theme-standard td, .fc-theme-standard th{
+  border: none;
+}
+
+}
+
+@media (max-width: 900px) {
+  .custom-calendar{
+    .custom-day .circle {
+      width: 50px;
+      height: 50px;
+    }
+    .fc .fc-daygrid-event{
+      max-width: 40px !important;
+      overflow: hidden;
+    }
+  }
+
+}
