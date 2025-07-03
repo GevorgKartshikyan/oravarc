@@ -88,6 +88,7 @@ function Main({isAdmin, user}) {
         setSelectedProduct(null);
     }
     const handleAddEvent = async (fields) => {
+        setAddBtnLoading(true)
         const startToSend = getDateTimeString(newEventStart, fields.startTime);
         const endToSend = getDateTimeString(newEventEnd, fields.endTime);
         const daysCount = getDaysDifference(newEventStart, newEventEnd) || 1;

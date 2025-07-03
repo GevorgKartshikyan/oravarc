@@ -15,9 +15,10 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {getDaysDifference} from "../helpers/formatDate.js";
 import moment from "moment";
+
 function AddEventModal({
                            visible, handleAddEvent, addLoading, onHide, productInfo,
-                           allContacts, allFields,isAdmin,product,eventEnd,eventStart
+                           allContacts, allFields, isAdmin, product, eventEnd, eventStart
                        }) {
     const {width} = useWindowSize()
     const [newEventStart, setNewEventStart] = useState('12:00');
@@ -29,6 +30,7 @@ function AddEventModal({
     const [newContactPhones, setNewContactPhones] = useState([]);
     const [isNewContact, setIsNewContact] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [btnLoading, setBtnLoading] = useState(false);
     const toast = useRef(null);
     const searchContacts = (event) => {
         const query = event.query.toLowerCase();
@@ -63,13 +65,14 @@ function AddEventModal({
     return (
         <>
             <Toast ref={toast}/>
-            <Dialog header={()=>{
+            <Dialog header={() => {
                 return (
-                        <div>
-                            <p>{productInfo?.title}</p>
-                            <p>Արժեք: <strong>{( getDaysDifference(eventStart, eventEnd) || 1) * productInfo?.opportunity}</strong></p>
-                            <p>{moment(eventStart).format('DD.MM.YYYY')} - {moment(eventEnd).format('DD.MM.YYYY')}</p>
-                        </div>
+                    <div>
+                        <p>{productInfo?.title}</p>
+                        <p>Արժեք: <strong>{(getDaysDifference(eventStart, eventEnd) || 1) * productInfo?.opportunity}</strong>
+                        </p>
+                        <p>{moment(eventStart).format('DD.MM.YYYY')} - {moment(eventEnd).format('DD.MM.YYYY')}</p>
+                    </div>
                 )
             }} onHide={onHide} visible={visible}
                     style={{minWidth: width < 768 ? '95%' : '50%'}}>
@@ -190,7 +193,8 @@ function AddEventModal({
                                         <p>Ավելացված համարներ</p>
                                         <ul className="p-0 flex gap-2">
                                             {newContactPhones.map((phone, index) => (
-                                                <li key={index} className="flex justify-between align-items-center border-1 rounded p-2">
+                                                <li key={index}
+                                                    className="flex justify-between align-items-center border-1 rounded p-2">
                                                     <span>{phone}</span>
                                                     <Button
                                                         icon="pi pi-times"
@@ -207,7 +211,7 @@ function AddEventModal({
                             </div>
                         )}
                     </div>
-                    {sortedFields.filter((e)=>isAdmin || e.ID === '238' || e.ID === '234').map(field => {
+                    {sortedFields.filter((e) => isAdmin || e.ID === '238' || e.ID === '234').map(field => {
                         const {
                             FIELD_NAME,
                             USER_TYPE_ID,
@@ -278,21 +282,22 @@ function AddEventModal({
                                         className="w-full"
                                         onChange={(e) => handleChange(FIELD_NAME, e.value)}
                                     />
-                                ) :null}
+                                ) : null}
                             </div>
                         );
                     })}
 
                     <div>
                         <Button
-                            disabled={addLoading}
-                            loading={addLoading}
+                            disabled={btnLoading}
+                            loading={btnLoading}
                             label="Ամրագրել"
                             icon="pi pi-save"
-                            onClick={() => {
+                            onClick={async () => {
+                                setBtnLoading(true)
                                 const missingRequired = sortedFields
                                     .filter(field => field.MANDATORY === 'Y' && field.USER_TYPE_ID !== 'datetime')
-                                    .filter((e)=>isAdmin || e.ID === '238' || e.ID === '234')
+                                    .filter((e) => isAdmin || e.ID === '238' || e.ID === '234')
                                     .some(field => {
                                         const value = formData[field.FIELD_NAME];
                                         return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
@@ -319,7 +324,7 @@ function AddEventModal({
                                     }
                                 }
                                 if (isNewContact && (!newContactName || newContactPhones.length === 0) && isAdmin) {
-                                    if (formData?.UF_CRM_1749479746448?.ID !== '44'){
+                                    if (formData?.UF_CRM_1749479746448?.ID !== '44') {
                                         toast.current.show({
                                             severity: 'error',
                                             summary: 'Սխալ',
@@ -329,15 +334,16 @@ function AddEventModal({
                                         return;
                                     }
                                 }
-                                handleAddEvent({
+                                await handleAddEvent({
                                     startTime: newEventStart,
                                     endTime: newEventEnd,
                                     ...formData,
                                     isNewContact,
                                     CONTACT_ID: selectedContact?.ID,
-                                    contact_name:isAdmin ? (isNewContact ? newContactName : selectedContact?.FULL_NAME) : null,
-                                    contact_phone:isAdmin ? (isNewContact ? newContactPhones : selectedContact?.PHONE) : null,
+                                    contact_name: isAdmin ? (isNewContact ? newContactName : selectedContact?.FULL_NAME) : null,
+                                    contact_phone: isAdmin ? (isNewContact ? newContactPhones : selectedContact?.PHONE) : null,
                                 });
+                                setBtnLoading(false)
                             }}
                             className="w-full"
                         />
