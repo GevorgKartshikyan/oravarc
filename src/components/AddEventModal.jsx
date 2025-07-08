@@ -15,6 +15,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {getDaysDifference} from "../helpers/formatDate.js";
 import moment from "moment";
+import {FileUpload} from "primereact/fileupload";
 function AddEventModal({
                            visible, handleAddEvent, addLoading, onHide, productInfo,
                            allContacts, allFields,isAdmin,product,eventEnd,eventStart
@@ -29,6 +30,7 @@ function AddEventModal({
     const [newContactPhones, setNewContactPhones] = useState([]);
     const [isNewContact, setIsNewContact] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [btnLoading, setBtnLoading] = useState(false);
     const toast = useRef(null);
     const searchContacts = (event) => {
         const query = event.query.toLowerCase();
@@ -278,17 +280,36 @@ function AddEventModal({
                                         className="w-full"
                                         onChange={(e) => handleChange(FIELD_NAME, e.value)}
                                     />
-                                ) :null}
+                                ) : USER_TYPE_ID === 'file'? (
+                                    <FileUpload
+                                        name="file"
+                                        customUpload
+                                        auto
+                                        multiple={false}
+                                        chooseLabel="Ներբեռնել ֆայլ"
+                                        className="w-full"
+                                        onSelect={(e) => {
+                                            const file = e.files?.[0];
+                                            if (file) {
+                                                handleChange(FIELD_NAME, [file]);
+                                            }
+                                        }}
+                                        onClear={() => handleChange(FIELD_NAME, [])}
+                                    />
+
+                                ): null}
                             </div>
                         );
                     })}
 
                     <div>
                         <Button
-                            loading={addLoading}
+                            loading={btnLoading}
+                            disabled={btnLoading}
                             label="Ամրագրել"
                             icon="pi pi-save"
-                            onClick={() => {
+                            onClick={ async () => {
+                                setBtnLoading(true)
                                 const missingRequired = sortedFields
                                     .filter(field => field.MANDATORY === 'Y' && field.USER_TYPE_ID !== 'datetime')
                                     .filter((e)=>isAdmin || e.ID === '238' || e.ID === '234')
@@ -328,7 +349,7 @@ function AddEventModal({
                                         return;
                                     }
                                 }
-                                handleAddEvent({
+                                await handleAddEvent({
                                     startTime: newEventStart,
                                     endTime: newEventEnd,
                                     ...formData,
@@ -337,6 +358,7 @@ function AddEventModal({
                                     contact_name:isAdmin ? (isNewContact ? newContactName : selectedContact?.FULL_NAME) : null,
                                     contact_phone:isAdmin ? (isNewContact ? newContactPhones : selectedContact?.PHONE) : null,
                                 });
+                                setBtnLoading(false);
                             }}
                             className="w-full"
                         />

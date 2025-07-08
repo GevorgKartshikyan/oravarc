@@ -67,7 +67,6 @@ function Main({isAdmin, user}) {
             const allDealsProperty = await fetchAllItems(2,isAdmin,user);
             const allContacts = await fetchAllContacts();
             const allUsers = await getAllUsers();
-            console.log(allFields)
             setResources(formatResources(allDealsProperty, allContacts));
             setAllResources(formatResources(allDealsProperty, allContacts));
             setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));

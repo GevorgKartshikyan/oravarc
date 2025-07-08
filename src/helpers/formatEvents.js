@@ -3,7 +3,7 @@ import {getEventColor} from "./getEventColor.js";
 
 export const formatEvents = (allDeals,allSmartProcess) => {
     return allDeals.map((e)=>{
-        const product = allSmartProcess.find((pr)=>+pr.ID===+e.UF_CRM_1751522804);
+        const product = allSmartProcess.find((pr)=>+pr.ID===+e?.UF_CRM_1751522804);
         return {
             ...e,
             product,

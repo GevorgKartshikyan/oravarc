@@ -54,7 +54,7 @@ export const fetchAllDeals = async (categoryId) => {
         }
         const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, {
             cmd: batchRequests.reduce((acc, req, idx) => {
-                const select = ["ID", 'TITLE',"UF_*",'CATEGORY_ID',"*"];
+                const select = ["ID", 'TITLE', "UF_*", 'CATEGORY_ID', "*"];
                 const selectStr = select.map(id => `select[]=${id}`).join('&');
                 acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}&filter[CATEGORY_ID]=${categoryId}`;
                 return acc;
@@ -122,16 +122,47 @@ export const fetchAllContacts = async () => {
         }
         start += requestsNeeded * BATCH_SIZE;
     }
-    return allContacts.map((e)=>{
+    return allContacts.map((e) => {
         return {
             ...e,
             FULL_NAME: e.NAME || '' + ' ' + e.LAST_NAME || '',
             PHONE: e.PHONE ? e.PHONE[0].VALUE : '',
-            PHONES:e.PHONE
+            PHONES: e.PHONE
         }
     });
 };
-export const addDeal = async (start, end, daysCount,productId,ufs,opportunity,creator,is_admin,assigned,remainder) => {
+const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+};
+export const uploadFile = async (fileName, file) => {
+    const base64 = await fileToBase64(file);
+    const {data} = await axios.post(`${REACT_APP_BASE_URL}/disk.storage.uploadFile.json`, {
+        id: 3,
+        data: {
+            NAME: fileName
+        },
+        fileContent: base64.split(',')[1],
+        generateUniqueName: true
+    }, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        }
+    })
+    return data.result.ID
+}
+export const addDeal = async (start, end, daysCount, productId, ufs, opportunity, creator, is_admin, assigned, remainder) => {
+    const files = [];
+    if (ufs.UF_CRM_1751885344112) {
+        for (const item of ufs.UF_CRM_1751885344112) {
+            const base64 = await fileToBase64(item);
+            files.push(item.name , base64.split(',')[1]);
+        }
+    }
     let contact_id = ufs.CONTACT_ID
     if (!contact_id && is_admin && ufs.contact_phone && ufs.contact_name){
         const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.contact.add`, {
@@ -157,7 +188,10 @@ export const addDeal = async (start, end, daysCount,productId,ufs,opportunity,cr
             CONTACT_ID:contact_id,
             UF_CRM_1749565990368:creator,
             ASSIGNED_BY_ID:assigned,
-            UF_CRM_1750401051:remainder
+            UF_CRM_1750401051:remainder,
+            UF_CRM_1751885344112:{
+                fileData: files,
+            }
         },
     });
     const {data:deal} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
@@ -165,7 +199,7 @@ export const addDeal = async (start, end, daysCount,productId,ufs,opportunity,cr
     })
     return deal.result
 };
-export const updateDeal = async (id,start, end, daysCount,ufs,opportunity,remainder) =>{
+export const updateDeal = async (id, start, end, daysCount, ufs, opportunity, remainder) => {
     const {data: dealId} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.update`, {
         id: id,
         fields: {
@@ -173,11 +207,11 @@ export const updateDeal = async (id,start, end, daysCount,ufs,opportunity,remain
             UF_CRM_1749479675960: start,
             UF_CRM_1749539216833: daysCount,
             ...ufs,
-            OPPORTUNITY:opportunity,
-            UF_CRM_1750401051:remainder
+            OPPORTUNITY: opportunity,
+            UF_CRM_1750401051: remainder
         },
     });
-    const {data:deal} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
+    const {data: deal} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
         id: id
     })
     return deal.result
@@ -199,25 +233,25 @@ export const getDeal = async (id) => {
 }
 export const getDealUserField = async () => {
     const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.fields`, {
-        select: ['*','TITLE','NAME']
+        select: ['*', 'TITLE', 'NAME']
     })
     return data.result
 }
 export const getDealUserFieldGet = async (id) => {
     const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.userfield.get`, {
-        id:id
+        id: id
     })
     return data.result
 }
-const fetchItemsCount = async (entity,isAdmin,user) => {
+const fetchItemsCount = async (entity, isAdmin, user) => {
     const filter = {
         CATEGORY_ID: entity
     };
-    if(!isAdmin){
+    if (!isAdmin) {
         filter['CONTACT_ID'] = user.ID
     }
     const response = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.list.json`, {
-        select: ['ID','CONTACT_ID'],
+        select: ['ID', 'CONTACT_ID'],
         filter
     });
 
@@ -248,7 +282,7 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
                 .map(([key, value]) => `filter[${key}]=${value}`)
                 .join('&');
 
-            const select = ["ID", "TITLE", "*",'UF_*'];
+            const select = ["ID", "TITLE", "*", 'UF_*'];
             const selectStr = select.map(id => `select[]=${id}`).join('&');
 
             batchRequests.push({
@@ -262,7 +296,7 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
             return acc;
         }, {});
 
-        const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, { cmd });
+        const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, {cmd});
 
         if (batchResponse.data.error) {
             throw new Error(batchResponse.data.error_description);
@@ -289,17 +323,17 @@ export const deleteEvent = async (id) => {
     const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.update`, {
         id,
         fields: {
-            STAGE_ID:'LOSE'
+            STAGE_ID: 'LOSE'
         },
     })
     return data.result
 }
-export const fetchContactByCode = async (code,phone) => {
+export const fetchContactByCode = async (code, phone) => {
     const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.contact.list`, {
-        select: ['*','UF_CRM_1749826732273'],
-        filter:{
-            UF_CRM_1749826732273:code,
-            PHONE:phone
+        select: ['*', 'UF_CRM_1749826732273'],
+        filter: {
+            UF_CRM_1749826732273: code,
+            PHONE: phone
         }
     })
     return data.result
