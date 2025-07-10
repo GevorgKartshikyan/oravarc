@@ -54,11 +54,16 @@ function AddEventModal({
 
     const idx262 = sortedFields.findIndex(f => f.ID === "262");
     const idx251 = sortedFields.findIndex(f => f.ID === "252");
-
     if (idx262 !== -1 && idx251 !== -1 && idx262 !== idx251 + 1) {
         const [f262] = sortedFields.splice(idx262, 1);
         sortedFields.splice(idx251 + 1, 0, f262);
     }
+    const idx234 = sortedFields.findIndex(f => f.ID === "234");
+    if (idx234 !== -1) {
+        const [f234] = sortedFields.splice(idx234, 1);
+        sortedFields.push(f234);
+    }
+
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
@@ -225,8 +230,9 @@ function AddEventModal({
                         return (
                             <div key={FIELD_NAME} className="">
                                 {title && (
-                                    <label className="block mb-1">
-                                        {title}{MANDATORY === 'Y' && <span className="text-red-500"> *</span>}
+                                    <label className={`block mb-1 ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-lg' : ''}`}>
+                                        {title}
+                                        {MANDATORY === 'Y' && <span className="text-red-500"> *</span>}
                                     </label>
                                 )}
                                 {USER_TYPE_ID === 'enumeration' ? (
@@ -245,7 +251,15 @@ function AddEventModal({
                                             options={LIST || []}
                                             optionLabel="VALUE"
                                             placeholder="Select..."
-                                            className="w-full"
+                                            className={`w-full
+    ${FIELD_NAME === 'UF_CRM_1749479746448' ? `
+      font-bold text-xl 
+      border-8 border-red-600 
+      shadow-[0_0_20px_5px_rgba(220,38,38,0.7)] 
+      bg-red-50 
+      rounded-lg
+    ` : ''}
+  `}
                                             onChange={(e) => handleChange(FIELD_NAME, e.value)}
                                         />
                                     )
