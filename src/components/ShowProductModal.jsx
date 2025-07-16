@@ -91,6 +91,14 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                     <span>-</span>
                     <span className="text-gray-900 text-xl">{product?.contact?.FULL_NAME}</span>
                 </div>
+                {product && product.contact && product.contact.PHONES && (
+                    <div className="mb-3 flex align-items-center gap-3">
+                        <span className="font-medium text-gray-700">Հեռ․՝</span>
+                        <span>-</span>
+                        {product.contact.PHONES.map((e) => (
+                            <a href={`tel:${e.VALUE}`} className="text-gray-900 text-xl">{e.VALUE}</a>
+                        ))}
+                    </div>)}
                 <div className="mb-3 flex align-items-center gap-3">
                     <span className="font-medium text-gray-700">Արժեք</span>
                     <span>-</span>

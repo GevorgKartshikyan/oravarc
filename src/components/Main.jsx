@@ -22,6 +22,7 @@ import {Toast} from "primereact/toast";
 import {MultiSelect} from "primereact/multiselect";
 import dayGridPlugin from '@fullcalendar/daygrid'
 import {SelectButton} from "primereact/selectbutton";
+import {Calendar} from "primereact/calendar";
 
 function Main({isAdmin, user}) {
     const [loading, setLoading] = useState(true);
@@ -46,6 +47,7 @@ function Main({isAdmin, user}) {
     const [allUsers, setAllUsers] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [selectedResource, setSelectedResource] = useState({});
+    const [freeDays, setFreeDays] = useState([]);
     useEffect(() => {
         setSelectedResource(resources[0])
         setSelectedProduct(resources[0])
@@ -61,11 +63,11 @@ function Main({isAdmin, user}) {
     useEffect(() => {
         (async () => {
             const allFields = await fetItemsFields();
-            const dealUserFields = await getDealUserField();
-            for (const item of dealUserFields) {
-                const res = await getDealUserFieldGet(item.ID);
-                item.title = res.LIST_COLUMN_LABEL?.ru || '';
-            }
+            // const dealUserFields = await getDealUserField();
+            // for (const item of dealUserFields) {
+            //     const res = await getDealUserFieldGet(item.ID);
+            //     item.title = res.LIST_COLUMN_LABEL?.ru || '';
+            // }
             const allSmartProcess = await fetchAllItems(1036, isAdmin, user);
             const allDeals = await fetchAllDeals();
             const allContacts = await fetchAllContacts();
@@ -82,6 +84,38 @@ function Main({isAdmin, user}) {
             setSmartProcessFields(allFields);
         })();
     }, []);
+    const handleFilterFreeDays = async () => {
+        const [rangeStartStr, rangeEndStr] = freeDays;
+        const rangeStart = new Date(rangeStartStr);
+        const rangeEnd = new Date(rangeEndStr);
+        const toDateStr = (date) => new Date(date).toISOString().split('T')[0];
+        const rangeDates = [];
+        for (let d = new Date(rangeStart); d <= rangeEnd; d.setDate(d.getDate() + 1)) {
+            rangeDates.push(toDateStr(new Date(d)));
+        }
+        const busyDatesByResource = {};
+
+        for (const event of filteredEvents) {
+            const resId = event.resourceId;
+            if (!busyDatesByResource[resId]) {
+                busyDatesByResource[resId] = new Set();
+            }
+
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+
+            for (let d = new Date(eventStart); d <= eventEnd; d.setDate(d.getDate() + 1)) {
+                busyDatesByResource[resId].add(toDateStr(new Date(d)));
+            }
+        }
+        const filteredResources = allResources.filter((resource) => {
+            const busyDates = busyDatesByResource[resource.id] || new Set();
+
+            return rangeDates.some((date) => !busyDates.has(date));
+        });
+        setResources(filteredResources);
+    };
+
 
     const handleHideAddModal = () => {
         setAddModalVisible(false);
@@ -203,7 +237,7 @@ function Main({isAdmin, user}) {
             <div style={{
                 backgroundColor: arg.backgroundColor,
                 color: 'white',
-                boxShadow:'rgba(0, 0, 0, 0.2) 0px 2px 5px',
+                boxShadow: 'rgba(0, 0, 0, 0.2) 0px 2px 5px',
                 borderRadius: '3px',
                 padding: '2px'
             }} className="reserved-dot">{arg.event._def.title}</div>
@@ -243,6 +277,17 @@ function Main({isAdmin, user}) {
                     display="chip"
                     className='w-20rem'
                 />}
+                {isAdmin && (
+                    <div className='flex gap-3 align-items-center'>
+                        <Calendar
+                            value={freeDays}
+                            onChange={(e) => setFreeDays(e.value)}
+                            selectionMode='range'
+                            placeholder='Ազատ գույքեր'
+                        />
+                        <Button disabled={freeDays.length !== 2} onClick={handleFilterFreeDays} label='Փնտրել'/>
+                    </div>
+                )}
             </div>
             {filterVisible && <Filters
                 visible={filterVisible}
