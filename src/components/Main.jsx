@@ -63,11 +63,11 @@ function Main({isAdmin, user}) {
     useEffect(() => {
         (async () => {
             const allFields = await fetItemsFields();
-            // const dealUserFields = await getDealUserField();
-            // for (const item of dealUserFields) {
-            //     const res = await getDealUserFieldGet(item.ID);
-            //     item.title = res.LIST_COLUMN_LABEL?.ru || '';
-            // }
+            const dealUserFields = await getDealUserField();
+            for (const item of dealUserFields) {
+                const res = await getDealUserFieldGet(item.ID);
+                item.title = res.LIST_COLUMN_LABEL?.ru || '';
+            }
             const allSmartProcess = await fetchAllItems(1036, isAdmin, user);
             const allDeals = await fetchAllDeals();
             const allContacts = await fetchAllContacts();
