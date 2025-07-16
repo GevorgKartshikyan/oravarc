@@ -23,7 +23,7 @@ import {MultiSelect} from "primereact/multiselect";
 import dayGridPlugin from '@fullcalendar/daygrid'
 import {SelectButton} from "primereact/selectbutton";
 import {formatEventFileds} from "../helpers/formatEventFileds.js";
-
+import {Calendar} from "primereact/calendar";
 function Main({isAdmin, user}) {
     const [loading, setLoading] = useState(true);
     const [events, setEvents] = useState([]);
@@ -47,6 +47,7 @@ function Main({isAdmin, user}) {
     const [allUsers, setAllUsers] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [selectedResource, setSelectedResource] = useState({});
+    const [freeDays, setFreeDays] = useState([]);
     useEffect(() => {
         setSelectedResource(resources[0])
         setSelectedProduct(resources[0])
@@ -83,6 +84,37 @@ function Main({isAdmin, user}) {
         setAddModalVisible(false);
         setSelectedProduct(null);
     }
+    const handleFilterFreeDays = async () => {
+        const [rangeStartStr, rangeEndStr] = freeDays;
+        const rangeStart = new Date(rangeStartStr);
+        const rangeEnd = new Date(rangeEndStr);
+        const toDateStr = (date) => new Date(date).toISOString().split('T')[0];
+        const rangeDates = [];
+        for (let d = new Date(rangeStart); d <= rangeEnd; d.setDate(d.getDate() + 1)) {
+            rangeDates.push(toDateStr(new Date(d)));
+        }
+        const busyDatesByResource = {};
+
+        for (const event of filteredEvents) {
+            const resId = event.resourceId;
+            if (!busyDatesByResource[resId]) {
+                busyDatesByResource[resId] = new Set();
+            }
+
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+
+            for (let d = new Date(eventStart); d <= eventEnd; d.setDate(d.getDate() + 1)) {
+                busyDatesByResource[resId].add(toDateStr(new Date(d)));
+            }
+        }
+        const filteredResources = allResources.filter((resource) => {
+            const busyDates = busyDatesByResource[resource.id] || new Set();
+
+            return rangeDates.some((date) => !busyDates.has(date));
+        });
+        setResources(filteredResources);
+    };
     const handleAddEvent = async (fields) => {
         const startToSend = getDateTimeString(newEventStart, fields.startTime);
         const endToSend = getDateTimeString(newEventEnd, fields.endTime);
@@ -238,7 +270,19 @@ function Main({isAdmin, user}) {
                     display="chip"
                     className='w-20rem'
                 />}
+                {isAdmin && (
+                    <div className='flex gap-3 align-items-center'>
+                        <Calendar
+                            value={freeDays}
+                            onChange={(e) => setFreeDays(e.value)}
+                            selectionMode='range'
+                            placeholder='Ազատ գույքեր'
+                        />
+                        <Button disabled={freeDays.length !== 2} onClick={handleFilterFreeDays} label='Փնտրել'/>
+                    </div>
+                )}
             </div>
+
             {filterVisible && <Filters
                 visible={filterVisible}
                 onHide={() => setFilterVisible(false)}
