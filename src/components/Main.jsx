@@ -94,7 +94,6 @@ function Main({isAdmin, user}) {
             rangeDates.push(toDateStr(new Date(d)));
         }
         const busyDatesByResource = {};
-
         for (const event of filteredEvents) {
             const resId = event.resourceId;
             if (!busyDatesByResource[resId]) {
@@ -103,6 +102,8 @@ function Main({isAdmin, user}) {
 
             const eventStart = new Date(event.start);
             const eventEnd = new Date(event.end);
+            eventStart.setHours(0, 0, 0, 0);
+            eventEnd.setHours(0, 0, 0, 0);
 
             for (let d = new Date(eventStart); d <= eventEnd; d.setDate(d.getDate() + 1)) {
                 busyDatesByResource[resId].add(toDateStr(new Date(d)));
@@ -110,12 +111,16 @@ function Main({isAdmin, user}) {
         }
         const filteredResources = allResources.filter((resource) => {
             const busyDates = busyDatesByResource[resource.id] || new Set();
-
             return rangeDates.some((date) => !busyDates.has(date));
         });
+
         setResources(filteredResources);
     };
 
+const handleClearFreeDays = () => {
+    setFreeDays([]);
+    setResources(allResources);
+};
 
     const handleHideAddModal = () => {
         setAddModalVisible(false);
@@ -286,6 +291,7 @@ function Main({isAdmin, user}) {
                             placeholder='Ազատ գույքեր'
                         />
                         <Button disabled={freeDays.length !== 2} onClick={handleFilterFreeDays} label='Փնտրել'/>
+                        <Button disabled={freeDays.length !== 2} onClick={handleClearFreeDays} label='Մարքրել'/>
                     </div>
                 )}
             </div>
