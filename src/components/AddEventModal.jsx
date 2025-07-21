@@ -68,7 +68,7 @@ function AddEventModal({
     return (
         <>
             <Toast ref={toast}/>
-            <Dialog header={()=>{
+            <Dialog className='modal-dialog' header={()=>{
                 return (
                         <div>
                             <p>{productInfo?.title}</p>
@@ -212,6 +212,7 @@ function AddEventModal({
                             </div>
                         )}
                     </div>
+                    <div className='flex flex-wrap gap-3'>
                     {sortedFields.filter((e)=>isAdmin || e.ID === '238' || e.ID === '234').map(field => {
                         const {
                             FIELD_NAME,
@@ -224,7 +225,7 @@ function AddEventModal({
                         } = field;
                         const value = formData[FIELD_NAME];
                         return (
-                            <div key={FIELD_NAME} className="">
+                            <div key={FIELD_NAME} className="row-filed">
                                 {title && (
                                     <label className={`block mb-1 ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-lg' : ''}`}>
                                         {title}
@@ -313,7 +314,7 @@ function AddEventModal({
                             </div>
                         );
                     })}
-
+                    </div>
                     <div>
                         <Button
                             loading={btnLoading}

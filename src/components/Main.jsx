@@ -293,6 +293,7 @@ function Main({isAdmin, user}) {
             />}
             {eventToShow && (
                 <ShowEventModal
+                    allUsers={allUsers}
                     isOtherPerson={isOtherPerson}
                     handleUpdateEvent={handleUpdateEvent}
                     btnLoading={updateBtnLoading}

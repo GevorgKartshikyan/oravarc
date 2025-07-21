@@ -10,7 +10,7 @@ import {Checkbox} from "primereact/checkbox";
 import {InputMask} from "primereact/inputmask";
 import moment from "moment";
 
-function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading,allContacts, allFields ,btnLoading,handleUpdateEvent,isOtherPerson}) {
+function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading,allContacts, allFields ,btnLoading,handleUpdateEvent,isOtherPerson,allUsers}) {
     const { width } = useWindowSize();
     const [formData, setFormData] = useState({});
     const [newEventStart, setNewEventStart] = useState('');
@@ -52,13 +52,21 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
     }, []);
     return (
         <Dialog
+            className='modal-dialog'
             style={{ minWidth: width < 768 ? '95%' : '50%' }}
             visible={visible}
             onHide={onHide}
             header={()=>{
                 return (
                     <div>
-                        <p>{event?.title}</p>
+                        <p style={{cursor: 'pointer'}} onClick={()=>{
+                            window.BX24.openPath(
+                                `/crm/deal/details/${event.ID}/`,
+                                function (result) {
+                                    console.log(result);
+                                }
+                            );
+                        }}>{event?.title}</p>
                         <p>{moment(event.UF_CRM_1749479675960).format('DD.MM.YYYY')}  - {moment(event.UF_CRM_1749479687467).format('DD.MM.YYYY')}</p>
                         <div className='flex gap-2 align-items-center'>
                             <p>Գումար  - {event.OPPORTUNITY}</p>
@@ -77,6 +85,10 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                     wordBreak:'break-word',
                     wordWrap:'break-word',
                 }}>Հեռ։{contact?.PHONES?.map(item => item.VALUE).join(', ')}</div>
+            </div>
+            <div className='mb-3'>
+                <p><strong>Պատասխանատու</strong></p>
+                <p>{allUsers.find((e)=>+e.id === +event.ASSIGNED_BY_ID).title || 'Հեռացված է'}</p>
             </div>
             <div className="flex flex-column gap-3">
                 <div className="flex w-full gap-3">
