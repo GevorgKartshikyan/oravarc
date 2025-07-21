@@ -15,6 +15,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {getDaysDifference} from "../helpers/formatDate.js";
 import moment from "moment";
+import {FileUpload} from "primereact/fileupload";
 
 function AddEventModal({
                            visible, handleAddEvent, addLoading, onHide, productInfo,
@@ -70,7 +71,7 @@ function AddEventModal({
     return (
         <>
             <Toast ref={toast}/>
-            <Dialog header={() => {
+            <Dialog className='modal-dialog' header={() => {
                 return (
                     <div>
                         <p>{productInfo?.title}</p>
@@ -216,7 +217,8 @@ function AddEventModal({
                             </div>
                         )}
                     </div>
-                    {sortedFields.filter((e) => isAdmin || e.ID === '238' || e.ID === '234').map(field => {
+                    <div className='flex flex-wrap gap-3'>
+                    {sortedFields.filter((e) => e.USER_TYPE_ID !=='file' && isAdmin || e.ID === '238' || e.ID === '234').map(field => {
                         const {
                             FIELD_NAME,
                             USER_TYPE_ID,
@@ -228,7 +230,7 @@ function AddEventModal({
                         } = field;
                         const value = formData[FIELD_NAME];
                         return (
-                            <div key={FIELD_NAME} className="">
+                            <div key={FIELD_NAME} className="row-filed">
                                 {title && (
                                     <label className={`block mb-1 ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-lg' : ''}`}>
                                         {title}
@@ -296,11 +298,28 @@ function AddEventModal({
                                         className="w-full"
                                         onChange={(e) => handleChange(FIELD_NAME, e.value)}
                                     />
-                                ) : null}
+                                ) : USER_TYPE_ID === 'file'? (
+                                    <FileUpload
+                                        name="file"
+                                        customUpload
+                                        auto
+                                        multiple={false}
+                                        chooseLabel="Ներբեռնել ֆայլ"
+                                        className="w-full"
+                                        onSelect={(e) => {
+                                            const file = e.files?.[0];
+                                            if (file) {
+                                                handleChange(FIELD_NAME, [file]);
+                                            }
+                                        }}
+                                        onClear={() => handleChange(FIELD_NAME, [])}
+                                    />
+
+                                ) :null}
                             </div>
                         );
                     })}
-
+                    </div>
                     <div>
                         <Button
                             disabled={btnLoading}

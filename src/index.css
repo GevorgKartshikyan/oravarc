@@ -115,7 +115,18 @@ body {
 }
 
 }
-
+.p-dialog-header{
+  padding-bottom: 0 !important;
+}
+.row-filed{
+  width: 49%;
+}
+.modal-dialog{
+  max-width: 1000px !important;
+}
+/*.time-inputs{*/
+/*  width: 48%;*/
+/*}*/
 @media (max-width: 900px) {
   .custom-calendar{
     .custom-day .circle {
@@ -127,5 +138,7 @@ body {
       overflow: hidden;
     }
   }
-
+  .row-filed{
+    width: 100%;
+  }
 }

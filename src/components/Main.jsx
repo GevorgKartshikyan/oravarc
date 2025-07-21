@@ -305,6 +305,7 @@ const handleClearFreeDays = () => {
             />}
             {eventToShow && (
                 <ShowEventModal
+                    allUsers={allUsers}
                     isOtherPerson={isOtherPerson}
                     handleUpdateEvent={handleUpdateEvent}
                     btnLoading={updateBtnLoading}
