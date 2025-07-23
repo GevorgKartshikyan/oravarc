@@ -51,7 +51,7 @@ export const fetchAllDeals = async (startDate, endDate) => {
         }
         const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, {
             cmd: batchRequests.reduce((acc, req, idx) => {
-                const select = ["ID", 'TITLE',"UF_*",, "*"];
+                const select = ["ID", 'TITLE',"UF_*","*"];
                 const selectStr = select.map(id => `select[]=${id}`).join('&');
                 acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}`;
                 return acc;
