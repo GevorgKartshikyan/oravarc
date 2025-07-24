@@ -153,7 +153,7 @@ const handleClearFreeDays = () => {
                 isAdmin ? user.ID : `contact_${user.ID}`,
                 isAdmin,
                 isAdmin ? user.ID : 12,
-                (selectedProduct.opportunity * daysCount) - flatFields.UF_CRM_1749559223646
+                (selectedProduct.opportunity * daysCount) - (flatFields.UF_CRM_1749559223646 || 0) - (flatFields.UF_CRM_1753274901120 || 0)
             );
             setEvents([...events, ...formatEvents([deal], [selectedProduct])]);
             setFilteredEvents([...events, ...formatEvents([deal], [selectedProduct])]);
