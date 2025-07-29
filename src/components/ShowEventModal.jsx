@@ -50,6 +50,7 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
         setNewEventEnd(end)
         setFormData(defaultFormData);
     }, []);
+    console.log(allFields)
     return (
         <Dialog
             className='modal-dialog'
@@ -70,7 +71,8 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                         }}>{event?.title}</p>
                         <p>{moment(event.UF_CRM_1749479675960).format('DD.MM.YYYY')}  - {moment(event.UF_CRM_1749479687467).format('DD.MM.YYYY')}</p>
                         <div className='flex gap-2 align-items-center'>
-                            <p>Գումար  - {event.OPPORTUNITY}</p>
+                            <p>Նախնական գումար  - {event.OPPORTUNITY}</p>
+                            {event.UF_CRM_1753274901120 && <p>Զեղչ  - {event.UF_CRM_1753274901120}</p>}
                             <p>Կանխավճար  - {event.UF_CRM_1749559223646}</p>
                             <p>Մնացորդ  - {event.UF_CRM_1750401051}</p>
                         </div>
@@ -94,7 +96,9 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
             <div className="flex flex-column gap-3">
                 <div className="flex gap-3 time-inputs">
                     <div className='w-full'>
+                        <label htmlFor="start">Սկիզբ</label>
                         <InputMask
+                            id='start'
                             mask='99:99'
                             className='w-full'
                             timeOnly
@@ -104,7 +108,9 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                         />
                     </div>
                     <div className='w-full'>
+                        <label htmlFor="end">Ավարտ</label>
                         <InputMask
+                            id='end'
                             mask='99:99'
                             className='w-full'
                             timeOnly
@@ -115,7 +121,17 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                     </div>
                 </div>
            <div className='flex flex-wrap gap-3'>
-               {allFields.filter(field => field.USER_TYPE_ID !== 'datetime' && field.USER_TYPE_ID !== 'file' && field.FIELD_NAME !== 'UF_CRM_1749539216833' && field.title !== 'Ամրագրող' && !field.title.endsWith('-')).map(field => {
+               {[
+                   ...allFields.filter(field =>
+                       field.USER_TYPE_ID !== 'datetime' &&
+                       field.USER_TYPE_ID !== 'file' &&
+                       field.FIELD_NAME !== 'UF_CRM_1749539216833' &&
+                       field.title !== 'Ամրագրող' &&
+                       !field.title.endsWith('-') &&
+                       field.ID !== '234'
+                   ),
+                   ...allFields.filter(field => field.ID === '234')
+               ].map(field => {
                    const {
                        FIELD_NAME,
                        USER_TYPE_ID,

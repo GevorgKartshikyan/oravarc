@@ -48,6 +48,7 @@ function Main({isAdmin, user}) {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [selectedResource, setSelectedResource] = useState({});
     const [freeDays, setFreeDays] = useState([]);
+
     useEffect(() => {
         setSelectedResource(resources[0])
         setSelectedProduct(resources[0])
@@ -116,11 +117,10 @@ function Main({isAdmin, user}) {
 
         setResources(filteredResources);
     };
-
-const handleClearFreeDays = () => {
-    setFreeDays([]);
-    setResources(allResources);
-};
+    const handleClearFreeDays = () => {
+        setFreeDays([]);
+        setResources(allResources);
+    };
 
     const handleHideAddModal = () => {
         setAddModalVisible(false);
@@ -236,7 +236,6 @@ const handleClearFreeDays = () => {
         );
     }
 
-
     function renderEventContent(arg) {
         return (
             <div style={{
@@ -249,6 +248,32 @@ const handleClearFreeDays = () => {
         );
     }
 
+    useEffect(() => {
+        const attachListeners = () => {
+            const cellEls = document.querySelectorAll('.fc-timeline-bg > div');
+
+            const allDates = Array.from(document.querySelectorAll('.fc-col-header-cell[data-date]'));
+            const resourceRows = Array.from(document.querySelectorAll('.fc-timeline-lane'));
+            cellEls.forEach((cell) => {
+                const rect = cell.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                cell.addEventListener('mouseenter', () => {
+                    const dateIndex = Math.floor((x - allDates[0].getBoundingClientRect().left) / allDates[0].offsetWidth);
+                    const date = allDates[dateIndex]?.getAttribute('data-date');
+
+                    const resourceIndex = Math.floor((y - resourceRows[0].getBoundingClientRect().top) / resourceRows[0].offsetHeight);
+                    const resourceId = resourceRows[resourceIndex]?.getAttribute('data-resource-id');
+
+                    console.log('Hovered cell — Дата:', date, 'Ресурс:', resourceId);
+                });
+            });
+        };
+        setTimeout(() => {
+            attachListeners();
+        }, 300);
+
+    }, [filteredEvents, resources]);
     if (loading) {
         return <Loading/>
     }
@@ -359,9 +384,6 @@ const handleClearFreeDays = () => {
                         setAddModalVisible(true);
 
                     }}
-                    eventMouseEnter={(arg) => {
-                        // console.log(arg)
-                    }}
                     plugins={[resourceTimelinePlugin, interactionPlugin, dayGridPlugin]}
                     timeZone="Asia/Yerevan"
                     initialView={!isAdmin ? "dayGridMonth" : 'resourceTimelineMonth'}
@@ -392,12 +414,13 @@ const handleClearFreeDays = () => {
                     eventDrop={(info) => {
                         info.revert();
                     }}
+
                     slotLabelContent={(arg) => {
                         const date = arg.date;
                         const day = String(date.getDate()).padStart(2, '0');
                         const month = String(date.getMonth() + 1).padStart(2, '0');
                         return (
-                            <span className="my-custom-date-label">
+                            <span id={`${day}.${month}`} className="my-custom-date-label">
                                 {day}.{month}
                                  </span>
                         );

@@ -54,17 +54,31 @@ function AddEventModal({
         .filter(f => f.USER_TYPE_ID !== 'datetime' && f.FIELD_NAME !== 'UF_CRM_1749539216833' && f.title !== 'Ամրագրող' && !f?.title?.endsWith('-'));
 
     const idx262 = sortedFields.findIndex(f => f.ID === "262");
-    const idx251 = sortedFields.findIndex(f => f.ID === "252");
+    const idx251 = sortedFields.findIndex(f => f.ID === "251");
+    const idx252 = sortedFields.findIndex(f => f.ID === "252");
+    const idx486 = sortedFields.findIndex(f => f.ID === "486");
     if (idx262 !== -1 && idx251 !== -1 && idx262 !== idx251 + 1) {
         const [f262] = sortedFields.splice(idx262, 1);
-        sortedFields.splice(idx251 + 1, 0, f262);
+        const newIdx251 = sortedFields.findIndex(f => f.ID === "251");
+        sortedFields.splice(newIdx251 + 1, 0, f262);
     }
-    const idx234 = sortedFields.findIndex(f => f.ID === "234");
-    if (idx234 !== -1) {
-        const [f234] = sortedFields.splice(idx234, 1);
-        sortedFields.push(f234);
+    if (idx486 !== -1 && idx252 !== -1 && idx486 !== idx252 + 1) {
+        const [f486] = sortedFields.splice(idx486, 1);
+        const newIdx252 = sortedFields.findIndex(f => f.ID === "252");
+        sortedFields.splice(newIdx252 + 1, 0, f486);
+    }
+    const idsToMoveToEnd = ["234", "238", "488"];
+    const itemsToMove = [];
+
+    for (const id of idsToMoveToEnd) {
+        const idx = sortedFields.findIndex(f => f.ID === id);
+        if (idx !== -1) {
+            itemsToMove.push(sortedFields[idx]);
+            sortedFields.splice(idx, 1);
+        }
     }
 
+    sortedFields.push(...itemsToMove);
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
@@ -85,7 +99,9 @@ function AddEventModal({
                 <div className="flex flex-column gap-3 mt-1">
                     <div className="flex w-full gap-3">
                         <div className='w-full'>
+                            <label htmlFor="start">Սկիզբ</label>
                             <InputMask
+                                id='start'
                                 mask='99:99'
                                 className='w-full'
                                 timeOnly
@@ -95,7 +111,9 @@ function AddEventModal({
                             />
                         </div>
                         <div className='w-full'>
+                            <label htmlFor="end">Ավարտ</label>
                             <InputMask
+                                id='end'
                                 mask='99:99'
                                 className='w-full'
                                 timeOnly
@@ -230,7 +248,7 @@ function AddEventModal({
                         } = field;
                         const value = formData[FIELD_NAME];
                         return (
-                            <div key={FIELD_NAME} className="row-filed">
+                            <div key={FIELD_NAME} className={`row-filed ${FIELD_NAME === 'UF_CRM_1753275105912' || FIELD_NAME === 'UF_CRM_1749539326485' ? 'w-full' : ''}`}>
                                 {title && (
                                     <label className={`block mb-1 ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-lg' : ''}`}>
                                         {title}
@@ -268,7 +286,6 @@ function AddEventModal({
                                 ) : USER_TYPE_ID === 'string' ? (
                                     SETTINGS?.ROWS && SETTINGS.ROWS > 1 ? (
                                         <InputTextarea
-
                                             value={value || ''}
                                             placeholder={title}
                                             className="w-full"
@@ -343,6 +360,7 @@ function AddEventModal({
                                         detail: 'Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը։',
                                         life: 3000
                                     });
+                                    setBtnLoading(false)
                                     return;
                                 }
                                 if (!isNewContact && !selectedContact && isAdmin) {
@@ -353,6 +371,7 @@ function AddEventModal({
                                             detail: 'Խնդրում ենք նշել հաճախորդ',
                                             life: 3000
                                         });
+                                        setBtnLoading(false)
                                         return;
                                     }
                                 }
@@ -364,6 +383,7 @@ function AddEventModal({
                                             detail: 'Խնդրում ենք նշել հաճախորդի անունը եւ հեռախոս',
                                             life: 3000
                                         });
+                                        setBtnLoading(false)
                                         return;
                                     }
                                 }
