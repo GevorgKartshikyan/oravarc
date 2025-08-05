@@ -81,6 +81,7 @@ function AddEventModal({
                 <div className="flex flex-column gap-3 mt-1">
                     <div className="flex w-full gap-3">
                         <div className='w-full'>
+                            <label htmlFor="start">Սկիզբ</label>
                             <InputMask
                                 mask='99:99'
                                 className='w-full'
@@ -91,6 +92,7 @@ function AddEventModal({
                             />
                         </div>
                         <div className='w-full'>
+                            <label htmlFor="end">Ավարտ</label>
                             <InputMask
                                 mask='99:99'
                                 className='w-full'
