@@ -352,9 +352,6 @@ function Main({isAdmin, user}) {
                         setAddModalVisible(true);
 
                     }}
-                    eventMouseEnter={(arg) => {
-                        // console.log(arg)
-                    }}
                     plugins={[resourceTimelinePlugin, interactionPlugin, dayGridPlugin]}
                     timeZone="Asia/Yerevan"
                     initialView={!isAdmin ? "dayGridMonth" : 'resourceTimelineMonth'}

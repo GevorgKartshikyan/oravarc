@@ -8,7 +8,7 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
     const {width} = useWindowSize();
     if (!product) return null;
     const renderField = (key, field) => {
-        const value = product[key];
+        const value = product[field.upperName];
         if (
             value === null ||
             value === undefined ||
@@ -46,24 +46,24 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
             case 'file': {
                 const files = Array.isArray(value) ? value : [value];
                 return null
-                return (
-                    <div key={key} className="mb-3">
-                        <div className="font-medium text-gray-700 mb-2">{title}</div>
-                        <div className="flex flex-wrap gap-3">
-                            {files.map((file, i) => (
-                                <Image
-                                    key={i}
-                                    src={file?.url || file?.url || file}
-                                    alt={`Նկար-${i}`}
-                                    width="100"
-                                    height="100"
-                                    preview
-                                    className="shadow-2 border-round"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                );
+                // return (
+                //     <div key={key} className="mb-3">
+                //         <div className="font-medium text-gray-700 mb-2">{title}</div>
+                //         <div className="flex flex-wrap gap-3">
+                //             {files.map((file, i) => (
+                //                 <Image
+                //                     key={i}
+                //                     src={file?.url || file?.url || file}
+                //                     alt={`Նկար-${i}`}
+                //                     width="100"
+                //                     height="100"
+                //                     preview
+                //                     className="shadow-2 border-round"
+                //                 />
+                //             ))}
+                //         </div>
+                //     </div>
+                // );
             }
 
             default:

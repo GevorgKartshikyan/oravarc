@@ -49,6 +49,7 @@ function AddEventModal({
             "XML_ID": "324354de9dc32043a1cccd0e0be17c4f"
         }
     });
+    console.log(allFields)
     const sortedFields = [...allFields]
         .filter(f => f.USER_TYPE_ID !== 'datetime' && f.FIELD_NAME !== 'UF_CRM_1749539216833' && f.title !== 'Ամրագրող' && !f?.title?.endsWith('-'));
     const idx262 = sortedFields.findIndex(f => f.ID === "262");
@@ -65,6 +66,7 @@ function AddEventModal({
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
+    console.log(sortedFields)
     return (
         <>
             <Toast ref={toast}/>
@@ -215,7 +217,7 @@ function AddEventModal({
                         )}
                     </div>
                     <div className='flex flex-wrap gap-3'>
-                    {sortedFields.filter((e)=>isAdmin || e.ID === '238' || e.ID === '234').map(field => {
+                    {sortedFields.filter((e)=>isAdmin || e.FIELD_NAME === 'UF_CRM_1749479746448' || e.FIELD_NAME === 'UF_CRM_1749539326485').map(field => {
                         const {
                             FIELD_NAME,
                             USER_TYPE_ID,

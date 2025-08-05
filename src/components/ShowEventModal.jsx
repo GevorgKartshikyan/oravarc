@@ -115,7 +115,8 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                         />
                     </div>
                 </div>
-            {allFields.filter(field => field.USER_TYPE_ID !== 'datetime' && field.FIELD_NAME !== 'UF_CRM_1749539216833' && field.title !== 'Ամրագրող' && !field.title.endsWith('-')).map(field => {
+                <div className='flex flex-wrap gap-3'>
+            {allFields.filter(field => field.USER_TYPE_ID !== 'datetime' && field.FIELD_NAME !== 'UF_CRM_1751885344112'  && field.FIELD_NAME !== 'UF_CRM_1749539216833' && field.title !== 'Ամրագրող' && !field.title.endsWith('-')).map(field => {
                 const {
                     FIELD_NAME,
                     USER_TYPE_ID,
@@ -126,7 +127,7 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                 } = field;
                 const value = formData[FIELD_NAME];
                 return (
-                    <div key={FIELD_NAME} className="">
+                    <div key={FIELD_NAME} className="row-filed">
                         {title && <label className="block mb-1">{title}</label>}
                         {USER_TYPE_ID === 'enumeration' ? (
                             MULTIPLE === 'Y' ? (
@@ -177,6 +178,7 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                     </div>
                 );
             })}
+                </div>
             </div>
             <div className="flex w-full gap-3">
             </div>
