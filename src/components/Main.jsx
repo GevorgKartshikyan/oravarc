@@ -3,8 +3,8 @@ import Loading from "./Loading.jsx";
 import {
     addDeal, deleteEvent,
     fetchAllContacts,
-    fetchAllDeals, fetchAllItems, fetItemsFields, getAllUsers,
-    getDealUserField, getDealUserFieldGet, updateDeal,
+    fetchAllDeals, fetchAllItems, fetItemsFields, getAllUsers, getDeal,
+    getDealUserField, updateDeal,
 } from "../../api.js";
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -24,6 +24,10 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import {SelectButton} from "primereact/selectbutton";
 import {formatEventFileds} from "../helpers/formatEventFileds.js";
 import {Calendar} from "primereact/calendar";
+import Holidays from 'date-holidays';
+import getSpecialDaysCount from "../helpers/getSpecialDaysCount.js";
+import echo from "../helpers/echo.js";
+
 function Main({isAdmin, user}) {
     const [loading, setLoading] = useState(true);
     const [events, setEvents] = useState([]);
@@ -48,13 +52,79 @@ function Main({isAdmin, user}) {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [selectedResource, setSelectedResource] = useState({});
     const [freeDays, setFreeDays] = useState([]);
+    const [holidays, setHolidays] = useState([]);
     useEffect(() => {
         setSelectedResource(resources[0])
         setSelectedProduct(resources[0])
     }, [resources])
+    const eventsRef = useRef([]);
+    useEffect(() => {
+        eventsRef.current = events;
+    }, [events]);
+
+    useEffect(() =>     {
+        const handleDealAdded = async (event) => {
+            const {dealId} = event;
+            try {
+                const deal = await getDeal(dealId);
+                const selectedProduct = await getDeal(deal.UF_CRM_1751522804);
+                const formatted = formatEvents([deal], [selectedProduct]);
+                setEvents((prev) => {
+                    const updated = [...prev, ...formatted];
+                    eventsRef.current = updated;
+                    return updated;
+                });
+                setFilteredEvents((prev) => [...prev, ...formatted]);
+            } catch (err) {
+                console.error("error to get deal", err);
+            }
+        };
+        const handleDeleteEvent = (dealId) => {
+            setEvents((prev) => {
+                const updated = prev.filter((e) => +e.ID !== +dealId);
+                eventsRef.current = updated;
+                return updated;
+            });
+            setFilteredEvents((prev) => prev.filter((e) => +e.ID !== +dealId));
+        };
+        const handleDealUpdate = async (event) => {
+            const {dealId} = event;
+            try {
+                const deal = await getDeal(dealId);
+                if (deal.STAGE_ID === 'LOSE'){
+                    handleDeleteEvent(dealId)
+                }else {
+                    const selectedProduct = await getDeal(deal.UF_CRM_1751522804);
+                    const newData = formatEvents([deal], [selectedProduct]);
+                    setEvents((prev) => {
+                        const updated = prev.map((e) => +e.ID === +deal.ID ? newData[0] : e);
+                        eventsRef.current = updated;
+                        return updated;
+                    });
+
+                    setFilteredEvents((prev) => prev.map((e) => +e.ID === +deal.ID ? newData[0] : e));
+                }
+            } catch (err) {
+                console.error("error to get deal", err);
+            }
+        };
+        echo.channel("deals").listen(".deal.added", handleDealAdded);
+        echo.channel("deals").listen(".deal.updated", handleDealUpdate);
+        return () => {
+            echo.leave("deals");
+        };
+    }, []);
+
+
+    useEffect(() => {
+        const hd = new Holidays('AM');
+        const year = new Date().getFullYear();
+        const data = hd.getHolidays(year);
+        setHolidays(data);
+    }, []);
     useEffect(() => {
         if (!isAdmin) {
-            const filteredEvents = events.filter(event => +event.UF_CRM_1751522804  === +selectedResource.id);
+            const filteredEvents = events.filter(event => +event.UF_CRM_1751522804 === +selectedResource.id);
             setFilteredEvents(filteredEvents);
         }
     }, [selectedResource, isAdmin]);
@@ -65,7 +135,7 @@ function Main({isAdmin, user}) {
             const allFields = await fetItemsFields();
             const dealUserFields = await getDealUserField();
             const allDealsEvents = await fetchAllDeals(0);
-            const allDealsProperty = await fetchAllItems(2,isAdmin,user);
+            const allDealsProperty = await fetchAllItems(2, isAdmin, user);
             const allContacts = await fetchAllContacts();
             const allUsers = await getAllUsers();
             setResources(formatResources(allDealsProperty, allContacts));
@@ -119,7 +189,15 @@ function Main({isAdmin, user}) {
     const handleAddEvent = async (fields) => {
         const startToSend = getDateTimeString(newEventStart, fields.startTime);
         const endToSend = getDateTimeString(newEventEnd, fields.endTime);
-        const daysCount = getDaysDifference(newEventStart, newEventEnd) || 1;
+        const specialDaysCount = getSpecialDaysCount(newEventStart, newEventEnd, holidays);
+        let daysCount = (getDaysDifference(newEventStart, newEventEnd) || 1);
+        let daysCount2 = (getDaysDifference(newEventStart, newEventEnd) || 1);
+        if (selectedProduct.UF_CRM_1754312563154) {
+            daysCount = daysCount - specialDaysCount
+        }
+        let regularPrice = selectedProduct.opportunity * daysCount;
+        const specialPrice = specialDaysCount * (parseInt(selectedProduct.UF_CRM_1754312563154) || 0);
+        const totalPrice = regularPrice + specialPrice;
         const hasOverlap = events.some(ev => {
             if (+selectedProduct.id !== +ev.product.id) return false;
             const evStart = new Date(ev.start);
@@ -135,17 +213,15 @@ function Main({isAdmin, user}) {
             const deal = await addDeal(
                 startToSend,
                 endToSend,
-                daysCount,
+                daysCount2,
                 selectedProduct.id,
                 flatFields,
-                selectedProduct.opportunity * daysCount,
+                totalPrice,
                 isAdmin ? user.ID : `contact_${user.ID}`,
                 isAdmin,
-                isAdmin ? user.ID : 12,
-                (selectedProduct.opportunity * daysCount) - flatFields.UF_CRM_1749559223646
+                isAdmin ? user.ID : 22,
+                (totalPrice) - flatFields.UF_CRM_1749559223646
             );
-            setEvents([...events, ...formatEvents([deal], [selectedProduct])]);
-            setFilteredEvents([...events, ...formatEvents([deal], [selectedProduct])]);
             setAddModalVisible(false);
             setSelectedProduct(null);
             setNewEventStart(null);
@@ -159,21 +235,26 @@ function Main({isAdmin, user}) {
     const handleUpdateEvent = async (fields) => {
         const startToSend = getDateTimeString(new Date(eventToShow.UF_CRM_1749479675960), fields.startTime);
         const endToSend = getDateTimeString(new Date(eventToShow.UF_CRM_1749479687467), fields.endTime);
-        const daysCount = getDaysDifference(new Date(eventToShow.UF_CRM_1749479675960), (new Date(eventToShow.UF_CRM_1749479687467))) || 1;
+        let daysCount = getDaysDifference(new Date(eventToShow.UF_CRM_1749479675960), (new Date(eventToShow.UF_CRM_1749479687467))) || 1;
+        let daysCount2 = getDaysDifference(new Date(eventToShow.UF_CRM_1749479675960), (new Date(eventToShow.UF_CRM_1749479687467))) || 1;
+        const specialDaysCount = getSpecialDaysCount(new Date(eventToShow.UF_CRM_1749479675960), (new Date(eventToShow.UF_CRM_1749479687467)), holidays);
+        if (selectedProduct.UF_CRM_1754312563154) {
+            daysCount = daysCount - specialDaysCount
+        }
+        let regularPrice = selectedProduct.opportunity * daysCount;
+        const specialPrice = specialDaysCount * (parseInt(selectedProduct.UF_CRM_1754312563154) || 0);
+        const totalPrice = regularPrice + specialPrice;
         try {
             const flatFields = flattenFormData(fields);
-            const deal = await updateDeal(
+            await updateDeal(
                 eventToShow.ID,
                 startToSend,
                 endToSend,
-                daysCount,
+                daysCount2,
                 flatFields,
-                eventToShow.product.opportunity * daysCount,
-                (eventToShow.product.opportunity * daysCount) - flatFields.UF_CRM_1749559223646,
+                totalPrice,
+                (totalPrice) - flatFields.UF_CRM_1749559223646,
             );
-            const newData = formatEvents([deal], [eventToShow.product]);
-            setEvents(events.map((e) => +e.ID === +eventToShow.ID ? newData[0] : e));
-            setFilteredEvents(events.map((e) => +e.ID === +eventToShow.ID ? newData[0] : e));
             setEventToShow(null);
         } catch (error) {
             console.error('error to add event', error);
@@ -184,8 +265,6 @@ function Main({isAdmin, user}) {
     const handleDeleteEvent = async (id) => {
         setDeleteLoading(true);
         await deleteEvent(id);
-        setEvents(events.filter((e) => +e.ID !== +id));
-        setFilteredEvents(events.filter((e) => +e.ID !== +id));
         setEventToShow(null)
         setDeleteLoading(false)
     };
@@ -197,6 +276,7 @@ function Main({isAdmin, user}) {
         setFreeDays([]);
         setResources(allResources);
     };
+
     function renderDayCell(arg, events) {
         const dayStart = new Date(arg.date);
         const dayEnd = new Date(arg.date);
@@ -234,7 +314,7 @@ function Main({isAdmin, user}) {
             <div style={{
                 backgroundColor: arg.backgroundColor,
                 color: 'white',
-                boxShadow:'rgba(0, 0, 0, 0.2) 0px 2px 5px',
+                boxShadow: 'rgba(0, 0, 0, 0.2) 0px 2px 5px',
                 borderRadius: '3px',
                 padding: '2px'
             }} className="reserved-dot">{arg.event._def.title}</div>
@@ -320,6 +400,7 @@ function Main({isAdmin, user}) {
                 />
             )}
             {addModalVisible && (<AddEventModal
+                holidays={holidays}
                 isAdmin={isAdmin}
                 allFields={dealUserFields}
                 allContacts={allContacts}
@@ -410,6 +491,7 @@ function Main({isAdmin, user}) {
                     ]}
                     height="auto"
                     eventClick={(info) => {
+                        setSelectedProduct(info.event._def.extendedProps.product)
                         const creator = info.event._def.extendedProps.UF_CRM_1749565990368
                         if (!isAdmin && creator !== `contact_${user.ID}`) {
                             setIsOtherPerson(true)

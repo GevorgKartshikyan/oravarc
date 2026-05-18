@@ -21,7 +21,6 @@ export const getAllUsers = async () => {
     while (next !== undefined) {
         const {data} = await axios.post(`${REACT_APP_BASE_URL}/user.get.json?start=${start}&select[]=*&filter[ACTIVE]=true`);
         const {next: nextStart, result} = data;
-
         if (result) {
             allUsers.push(...result);
         }
@@ -160,17 +159,17 @@ export const addDeal = async (start, end, daysCount, productId, ufs, opportunity
     if (ufs.UF_CRM_1751885344112) {
         for (const item of ufs.UF_CRM_1751885344112) {
             const base64 = await fileToBase64(item);
-            files.push(item.name , base64.split(',')[1]);
+            files.push(item.name, base64.split(',')[1]);
         }
     }
     let contact_id = ufs.CONTACT_ID
-    if (!contact_id && is_admin && ufs.contact_phone && ufs.contact_name){
+    if (!contact_id && is_admin && ufs.contact_phone && ufs.contact_name) {
         const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.contact.add`, {
             fields: {
                 NAME: ufs.contact_name,
-                PHONE: ufs.contact_phone.map((e)=>{
+                PHONE: ufs.contact_phone.map((e) => {
                     return {
-                        VALUE:'+'+e,
+                        VALUE: '+' + e,
                     }
                 })
             },
@@ -182,22 +181,23 @@ export const addDeal = async (start, end, daysCount, productId, ufs, opportunity
             UF_CRM_1749479687467: end,
             UF_CRM_1749479675960: start,
             UF_CRM_1749539216833: daysCount,
-            UF_CRM_1751522804:productId,
+            UF_CRM_1751522804: productId,
             ...ufs,
-            OPPORTUNITY:opportunity,
-            CONTACT_ID:contact_id,
-            UF_CRM_1749565990368:creator,
-            ASSIGNED_BY_ID:assigned,
-            UF_CRM_1750401051:remainder,
-            UF_CRM_1751885344112:{
+            OPPORTUNITY: opportunity,
+            CONTACT_ID: contact_id,
+            UF_CRM_1749565990368: creator,
+            ASSIGNED_BY_ID: assigned,
+            UF_CRM_1750401051: remainder,
+            UF_CRM_1751885344112: {
                 fileData: files,
             }
         },
     });
-    const {data:deal} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
-        id: dealId.result
-    })
-    return deal.result
+    return null
+    // const {data: deal} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
+    //     id: dealId.result
+    // })
+    // return deal.result
 };
 export const updateDeal = async (id, start, end, daysCount, ufs, opportunity, remainder) => {
     const {data: dealId} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.update`, {
@@ -216,18 +216,9 @@ export const updateDeal = async (id, start, end, daysCount, ufs, opportunity, re
     })
     return deal.result
 }
-export const addSmartProcess = async (dealId) => {
-    const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.item.add`, {
-        entityTypeId: 1036,
-        fields: {
-            parentId2: dealId
-        }
-    })
-    return data.result
-}
 export const getDeal = async (id) => {
     const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
-        id
+        id: id
     })
     return data.result
 }
@@ -237,15 +228,10 @@ export const getDealUserField = async () => {
     })
     return data.result
 }
-export const getDealUserFieldGet = async (id) => {
-    const {data} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.userfield.get`, {
-        id: id
-    })
-    return data.result
-}
+
 const fetchItemsCount = async (entity, isAdmin, user) => {
     const filter = {
-        CATEGORY_ID: entity
+        CATEGORY_ID: 2
     };
     if (!isAdmin) {
         filter['CONTACT_ID'] = user.ID
@@ -254,7 +240,7 @@ const fetchItemsCount = async (entity, isAdmin, user) => {
         select: ['ID', 'CONTACT_ID'],
         filter
     });
-
+    console.log(response)
     if (response.data.error) {
         throw new Error(response.data.error_description);
     }
@@ -266,12 +252,8 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
     let start = 0;
 
     const filter = {
-        CATEGORY_ID: entity
+        CATEGORY_ID: 2
     };
-    if (!isAdmin) {
-        filter['CONTACT_ID'] = user.ID;
-    }
-
     while (start < totalItems) {
         const batchRequests = [];
         const requestsNeeded = Math.min(BATCH_SIZE, Math.ceil((totalItems - start) / BATCH_SIZE));

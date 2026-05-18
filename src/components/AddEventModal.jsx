@@ -16,9 +16,10 @@ import 'react-phone-input-2/lib/style.css';
 import {getDaysDifference} from "../helpers/formatDate.js";
 import moment from "moment";
 import {FileUpload} from "primereact/fileupload";
+import getSpecialDaysCount from "../helpers/getSpecialDaysCount.js";
 function AddEventModal({
                            visible, handleAddEvent, addLoading, onHide, productInfo,
-                           allContacts, allFields,isAdmin,product,eventEnd,eventStart
+                           allContacts, allFields,isAdmin,product,eventEnd,eventStart,holidays
                        }) {
     const {width} = useWindowSize()
     const [newEventStart, setNewEventStart] = useState('12:00');
@@ -49,7 +50,6 @@ function AddEventModal({
             "XML_ID": "324354de9dc32043a1cccd0e0be17c4f"
         }
     });
-    console.log(allFields)
     const sortedFields = [...allFields]
         .filter(f => f.USER_TYPE_ID !== 'datetime' && f.FIELD_NAME !== 'UF_CRM_1749539216833' && f.title !== 'Ամրագրող' && !f?.title?.endsWith('-'));
     const idx262 = sortedFields.findIndex(f => f.ID === "262");
@@ -66,19 +66,24 @@ function AddEventModal({
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
-    console.log(sortedFields)
     return (
         <>
             <Toast ref={toast}/>
-            <Dialog className='modal-dialog' header={()=>{
+            <Dialog className='modal-dialog' header={() => {
+                let specialDaysCount = getSpecialDaysCount(eventStart,eventEnd,holidays);
+                if (!productInfo?.UF_CRM_1754312563154) {
+                    specialDaysCount = 0;
+                }
                 return (
-                        <div>
-                            <p>{productInfo?.title}</p>
-                            <p>Արժեք: <strong>{( getDaysDifference(eventStart, eventEnd) || 1) * productInfo?.opportunity}</strong></p>
-                            <p>{moment(eventStart).format('DD.MM.YYYY')} - {moment(eventEnd).format('DD.MM.YYYY')}</p>
-                        </div>
-                )
-            }} onHide={onHide} visible={visible}
+                    <div>
+                        <p>{productInfo?.title}</p>
+                        <p>Արժեք: <strong>{((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity}</strong></p>
+                        {productInfo?.UF_CRM_1754312563154 && <p>Հատուկ օրեր (շաբաթ/կիրակի/տոն): <strong>{specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0)}</strong></p>}
+                        <p>Ընդանուր: <strong>{(((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity) + (specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0))}</strong></p>
+                    </div>
+                );
+            }}
+                    onHide={onHide} visible={visible}
                     style={{minWidth: width < 768 ? '95%' : '50%'}}>
                 <div className="flex flex-column gap-3 mt-1">
                     <div className="flex w-full gap-3">

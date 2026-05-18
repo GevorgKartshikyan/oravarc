@@ -21,7 +21,7 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
         switch (field.type) {
             case 'boolean':
                 return (
-                    <div key={key} className="flex justify-between items-center mb-3">
+                    <div key={key} className="flex justify-between items-center mb-2">
                         <span className="font-medium text-gray-700">{title}</span>
                         <Tag className='text-xl' severity={value ? 'success' : 'danger'} value={value ? 'Այո' : 'Ոչ'}/>
                     </div>
@@ -31,12 +31,12 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                 const items = field.items || [];
                 const getLabel = (v) => items.find(i => +i.ID === +v)?.VALUE || v;
                 return (
-                    <div key={key} className="mb-3 flex align-items-center gap-3 flex-wrap">
-                        <div className="font-medium text-gray-700 mb-1">{title}</div>
+                    <div key={key} className="mb-2 flex align-items-center gap-3 flex-wrap">
+                        <div className="font-medium text-gray-700 mb-2">{title}</div>
                         <span>-</span>
                         {field.isMultiple && Array.isArray(value)
                             ? value.map(v => (
-                                <Tag key={v} value={getLabel(v)} className="mr-2 mb-1 text-base " rounded/>
+                                <Tag key={v} value={getLabel(v)} className="mr-2 mb-2 text-base " rounded/>
                             ))
                             : <p className='text-base'>{getLabel(value)}</p>}
                     </div>
@@ -47,7 +47,7 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                 const files = Array.isArray(value) ? value : [value];
                 return null
                 // return (
-                //     <div key={key} className="mb-3">
+                //     <div key={key} className="mb-2">
                 //         <div className="font-medium text-gray-700 mb-2">{title}</div>
                 //         <div className="flex flex-wrap gap-3">
                 //             {files.map((file, i) => (
@@ -68,7 +68,7 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
 
             default:
                 return (
-                    <div key={key} className="flex flex-col mb-3 gap-3 align-items-center">
+                    <div key={key} className="flex flex-col mb-2 gap-3 align-items-center">
                         <span className="font-medium text-gray-700">{title}</span>
                         <span>-</span>
                         <span className="text-gray-900 text-xl">{value}</span>
@@ -76,6 +76,7 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                 );
         }
     };
+    console.log(product)
     return (
         <Dialog
             header={product?.title || product?.NAME || 'Ապրանքի մանրամասներ'}
@@ -91,10 +92,18 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                     <span>-</span>
                     <span className="text-gray-900 text-xl">{product?.contact?.FULL_NAME}</span>
                 </div>
+                {product && product.contact && product.contact.PHONES && (
+                    <div className="mb-3 flex align-items-center gap-3">
+                        <span className="font-medium text-gray-700">Հեռ․՝</span>
+                        <span>-</span>
+                        {product.contact.PHONES.map((e) => (
+                            <a href={`tel:${e.VALUE}`} className="text-gray-900 text-xl">{e.VALUE}</a>
+                        ))}
+                    </div>)}
                 <div className="mb-3 flex align-items-center gap-3">
                     <span className="font-medium text-gray-700">Արժեք</span>
                     <span>-</span>
-                    <span className="text-gray-900 text-xl">{product?.opportunity}</span>
+                    <span className="text-gray-900 text-xl">{+product?.opportunity || 0}</span>
                 </div>
             </div>
             {Object.entries(smartProcessFields)

@@ -22,11 +22,20 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({ ...prev, [fieldName]: value }));
     };
+    function formatUfString(str) {
+        const parts = str.split('_');
+        if (parts.length !== 2) return str.toUpperCase();
+        const firstPart = parts[0]
+            .replace(/([a-z])([A-Z])/g, '$1_$2')
+            .toUpperCase();
 
+        const secondPart = parts[1];
+        return firstPart + '_' + secondPart;
+    }
     const ufOnly = Object.fromEntries(
-        Object.entries(properties).filter(([key,value]) =>{
-            return  (key.toLowerCase().startsWith('uf') && value.filterLabel?.startsWith('.')) || key === 'title' || key === 'opportunity'
-        })
+        Object.entries(properties).filter(([key]) =>
+            key.toLowerCase().startsWith('uf') || key === 'title' || key === 'opportunity'
+        )
     );
     const ufKeys = Object.keys(ufOnly);
     const handleApply = () => {
@@ -36,12 +45,10 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
             return ufKeys.every(ufKey => {
                 const field = properties[ufKey];
                 const filterValue = formData[ufKey];
-                const dealValue = resource[ufKey];
-
+                const dealValue = resource[formatUfString(ufKey)];
                 if (!field || filterValue == null || filterValue === '' || (Array.isArray(filterValue) && filterValue.length === 0)) {
                     return true;
                 }
-
                 const type = field.type;
                 const isMultiple = field.isMultiple;
 
@@ -108,6 +115,7 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
             settings,
             title
         } = field;
+
         const value = formData[fieldKey];
         if (title.endsWith('-') || title.endsWith('- ')) {
             return null

@@ -43,11 +43,11 @@ function App() {
     //     }
     // }, [isSourceSite]);
     //
-    // useEffect(() => {
-    //     if (authLoaded && auth.member_id !== REACT_APP_MEMBER) {
-    //         setShow404(true);
-    //     }
-    // }, [authLoaded]);
+    // // useEffect(() => {
+    // //     if (authLoaded && auth.member_id !== REACT_APP_MEMBER) {
+    // //         setShow404(true);
+    // //     }
+    // // }, [authLoaded]);
     //
     // const handleCodeSubmit = async () => {
     //     const contact = await fetchContactByCode(code, phone);

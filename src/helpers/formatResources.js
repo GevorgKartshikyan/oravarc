@@ -3,7 +3,7 @@ export const formatResources = (allSmartProcess, allContacts) => {
         allContacts.map(contact => [+contact.ID, contact])
     );
     return allSmartProcess.map(item => {
-        const contactId = item.CONTACT_ID;
+        const contactId = +item.CONTACT_ID;
         const contact = contactsMap.get(contactId);
         return {
             ...item,
