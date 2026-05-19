@@ -2,11 +2,13 @@ import axios from "axios";
 
 const REACT_APP_BASE_URL = import.meta.env.VITE_API_URL_BX
 const BATCH_SIZE = 50;
-const fetchDealCount = async (categoryId) => {
+const fetchDealCount = async (categoryId, startDate, endDate) => {
     const response = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.list.json`, {
         select: ['ID'],
         filter: {
-            CATEGORY_ID: categoryId
+            CATEGORY_ID: categoryId,
+            '>=UF_CRM_1749479675960': startDate,
+            '<=UF_CRM_1749479687467': endDate,
         }
     });
     if (response.data.error) {
@@ -34,8 +36,8 @@ export const getAllUsers = async () => {
         };
     })
 };
-export const fetchAllDeals = async (categoryId) => {
-    const totalLeads = await fetchDealCount(categoryId);
+export const fetchAllDeals = async (categoryId, startDate, endDate) => {
+    const totalLeads = await fetchDealCount(categoryId, startDate, endDate);
     let allDeals = [];
     let start = 0;
     while (start < totalLeads) {
@@ -47,15 +49,18 @@ export const fetchAllDeals = async (categoryId) => {
                 method: 'crm.deal.list',
                 params: {
                     start: start + i * BATCH_SIZE,
+                    filter: {
+                        '>=UF_CRM_1749479675960': startDate,
+                        '<=UF_CRM_1749479687467': endDate,
+                    }
                 },
-
             });
         }
         const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, {
             cmd: batchRequests.reduce((acc, req, idx) => {
                 const select = ["ID", 'TITLE', "UF_*", 'CATEGORY_ID', "*"];
                 const selectStr = select.map(id => `select[]=${id}`).join('&');
-                acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}&filter[CATEGORY_ID]=${categoryId}`;
+                acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}&filter[CATEGORY_ID]=${categoryId}&filter[>UF_CRM_1749479675960]=${req.params.filter['>=UF_CRM_1749479675960']}&filter[<UF_CRM_1749479687467]=${req.params.filter['<=UF_CRM_1749479687467']}`;
                 return acc;
             }, {})
         });
@@ -240,7 +245,7 @@ const fetchItemsCount = async (entity, isAdmin, user) => {
         select: ['ID', 'CONTACT_ID'],
         filter
     });
-    console.log(response)
+
     if (response.data.error) {
         throw new Error(response.data.error_description);
     }

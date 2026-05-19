@@ -27,9 +27,13 @@ import {Calendar} from "primereact/calendar";
 import Holidays from 'date-holidays';
 import getSpecialDaysCount from "../helpers/getSpecialDaysCount.js";
 import echo from "../helpers/echo.js";
+import useWindowSize from "../hooks/useWindowSize.js";
+import moment from "moment";
+import Overlay from "./Overlay.jsx";
 
 function Main({isAdmin, user}) {
     const [loading, setLoading] = useState(true);
+    const [secondLoading, setSecondLoading] = useState(false);
     const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [resources, setResources] = useState([]);
@@ -53,6 +57,8 @@ function Main({isAdmin, user}) {
     const [selectedResource, setSelectedResource] = useState({});
     const [freeDays, setFreeDays] = useState([]);
     const [holidays, setHolidays] = useState([]);
+    const {width} = useWindowSize();
+    const [selectedDate, setSelectedDate] = useState(null);
     useEffect(() => {
         setSelectedResource(resources[0])
         setSelectedProduct(resources[0])
@@ -132,24 +138,39 @@ function Main({isAdmin, user}) {
     // const []
     useEffect(() => {
         (async () => {
-            const allFields = await fetItemsFields();
-            const dealUserFields = await getDealUserField();
-            const allDealsEvents = await fetchAllDeals(0);
-            const allDealsProperty = await fetchAllItems(2, isAdmin, user);
-            const allContacts = await fetchAllContacts();
-            const allUsers = await getAllUsers();
-            setResources(formatResources(allDealsProperty, allContacts));
-            setAllResources(formatResources(allDealsProperty, allContacts));
-            setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
-            setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
-            setAllUsers(allUsers);
-            setSelectedUsers(allUsers);
-            setDealUserFields(formatEventFileds(dealUserFields));
-            setAllContacts(allContacts);
-            setLoading(false);
-            setSmartProcessFields(allFields);
+            if (!selectedDate) return;
+                setSecondLoading(true)
+                const firstDayCurrentMonth = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    1
+                );
+                const firstDayNextMonth = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth() + 1,
+                    1
+                );
+                const start = moment(firstDayCurrentMonth).format('YYYY-MM-DD');
+                const end = moment(firstDayNextMonth).format('YYYY-MM-DD');
+                const allFields = await fetItemsFields();
+                const dealUserFields = await getDealUserField();
+                const allDealsEvents = await fetchAllDeals(0, start, end);
+                const allDealsProperty = await fetchAllItems(2, isAdmin, user);
+                const allContacts = await fetchAllContacts();
+                const allUsers = await getAllUsers();
+                setResources(formatResources(allDealsProperty, allContacts));
+                setAllResources(formatResources(allDealsProperty, allContacts));
+                setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
+                setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
+                setAllUsers(allUsers);
+                setSelectedUsers(allUsers);
+                setDealUserFields(formatEventFileds(dealUserFields));
+                setAllContacts(allContacts);
+                setLoading(false);
+                setSecondLoading(false);
+                setSmartProcessFields(allFields);
         })();
-    }, []);
+    }, [selectedDate]);
     const handleHideAddModal = () => {
         setAddModalVisible(false);
         setSelectedProduct(null);
@@ -321,12 +342,10 @@ function Main({isAdmin, user}) {
         );
     }
 
-    if (loading) {
-        return <Loading/>
-    }
     return (
         <>
             <Toast ref={toast}/>
+            {secondLoading && <Overlay/>}
             <div className='flex gap-3 align-items-center mb-3'>
                 {isAdmin && <Button
                     icon='pi pi-filter'
@@ -415,6 +434,14 @@ function Main({isAdmin, user}) {
             />)}
             <div className={!isAdmin ? "custom-calendar" : ""}>
                 <FullCalendar
+                    datesSet={(info) => {
+                        const newDate = moment(info.start).format('YYYY-MM-DD');
+                        const currentDate = moment(selectedDate).format('YYYY-MM-DD');
+
+                        if (newDate !== currentDate) {
+                            setSelectedDate(info.start);
+                        }
+                    }}
                     dayCellContent={(arg) => renderDayCell(arg, filteredEvents)}
                     eventContent={isAdmin ? undefined : renderEventContent}
                     selectable={true}
@@ -432,6 +459,24 @@ function Main({isAdmin, user}) {
                         }
                         setAddModalVisible(true);
 
+                    }}
+                    dateClick={(info) => {
+                        if (width > 768) return;
+
+                        setNewEventStart(info.date);
+                        setNewEventEnd(info.date);
+
+                        if (isAdmin) {
+                            setSelectedProduct({
+                                ...info.resource?._resource?.extendedProps,
+                                title: info.resource?._resource?.title,
+                                id: info.resource?._resource?.id
+                            });
+                        } else {
+                            setSelectedProduct(selectedResource);
+                        }
+
+                        setAddModalVisible(true);
                     }}
                     plugins={[resourceTimelinePlugin, interactionPlugin, dayGridPlugin]}
                     timeZone="Asia/Yerevan"
