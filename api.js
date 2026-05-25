@@ -4,7 +4,7 @@ const REACT_APP_BASE_URL = import.meta.env.VITE_API_URL_BX
 const BATCH_SIZE = 50;
 const fetchDealCount = async (categoryId, startDate, endDate) => {
     const response = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.list.json`, {
-        select: ['ID'],
+        select: ['ID','UF_CRM_1749479675960','UF_CRM_1749479675960'],
         filter: {
             CATEGORY_ID: categoryId,
             '>=UF_CRM_1749479675960': startDate,
@@ -21,7 +21,7 @@ export const getAllUsers = async () => {
     let next = 0;
     let start = 0;
     while (next !== undefined) {
-        const {data} = await axios.post(`${REACT_APP_BASE_URL}/user.get.json?start=${start}&select[]=*&filter[ACTIVE]=true`);
+        const {data} = await axios.post(`${REACT_APP_BASE_URL}/user.get.json?start=${start}&select[]=*`);
         const {next: nextStart, result} = data;
         if (result) {
             allUsers.push(...result);
@@ -259,6 +259,9 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
     const filter = {
         CATEGORY_ID: 2
     };
+    if (!isAdmin) {
+        filter['CONTACT_ID'] = user.ID
+    }
     while (start < totalItems) {
         const batchRequests = [];
         const requestsNeeded = Math.min(BATCH_SIZE, Math.ceil((totalItems - start) / BATCH_SIZE));
@@ -271,7 +274,6 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
 
             const select = ["ID", "TITLE", "*", 'UF_*'];
             const selectStr = select.map(id => `select[]=${id}`).join('&');
-
             batchRequests.push({
                 key: `req_${i}`,
                 url: `crm.deal.list?start=${startIndex}&${filterParams}&${selectStr}`

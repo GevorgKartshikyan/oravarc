@@ -25,25 +25,47 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
     };
     useEffect(() => {
         const defaultFormData = {};
-        allFields.forEach(field => {
-            if (field.USER_TYPE_ID === 'enumeration' && field.MULTIPLE === 'N') {
-                const defaultValue = event[field.FIELD_NAME];
-                defaultFormData[field.FIELD_NAME] = field.LIST.find(item => +item.ID === +defaultValue);
-            }else if (field.USER_TYPE_ID === 'double' || field.USER_TYPE_ID === 'string' || field.USER_TYPE_ID === 'money') {
-                const defaultValue = event[field.FIELD_NAME];
-                defaultFormData[field.FIELD_NAME] = defaultValue;
-            }else if (field.USER_TYPE_ID === 'enumeration' && field.MULTIPLE === 'Y'){
-                const defaultValue = event[field.FIELD_NAME];
-                if (defaultValue){
-                    defaultFormData[field.FIELD_NAME] = field.LIST.filter(item => defaultValue?.includes(+item.ID));
-                }else {
-                    defaultFormData[field.FIELD_NAME] = [];
+        allFields
+            .sort((a, b) => {
+                if (a.FIELD_NAME === 'UF_CRM_1749479746448') return 1;
+                if (b.FIELD_NAME === 'UF_CRM_1749479746448') return -1;
+                return 0;
+            })
+            .forEach(field => {
+                if (field.USER_TYPE_ID === 'enumeration' && field.MULTIPLE === 'N') {
+                    const defaultValue = event[field.FIELD_NAME];
+
+                    defaultFormData[field.FIELD_NAME] =
+                        field.LIST.find(item => +item.ID === +defaultValue);
+
+                } else if (
+                    field.USER_TYPE_ID === 'double' ||
+                    field.USER_TYPE_ID === 'string' ||
+                    field.USER_TYPE_ID === 'money'
+                ) {
+                    const defaultValue = event[field.FIELD_NAME];
+                    defaultFormData[field.FIELD_NAME] = defaultValue;
+
+                } else if (
+                    field.USER_TYPE_ID === 'enumeration' &&
+                    field.MULTIPLE === 'Y'
+                ) {
+                    const defaultValue = event[field.FIELD_NAME];
+
+                    if (defaultValue) {
+                        defaultFormData[field.FIELD_NAME] =
+                            field.LIST.filter(item =>
+                                defaultValue?.includes(+item.ID)
+                            );
+                    } else {
+                        defaultFormData[field.FIELD_NAME] = [];
+                    }
+
+                } else if (field.USER_TYPE_ID === 'boolean') {
+                    const defaultValue = event[field.FIELD_NAME];
+                    defaultFormData[field.FIELD_NAME] = defaultValue === '1';
                 }
-            }else if (field.USER_TYPE_ID === 'boolean') {
-                const defaultValue = event[field.FIELD_NAME];
-                defaultFormData[field.FIELD_NAME] = defaultValue === '1';
-            }
-        });
+            });
         const start = moment(event.UF_CRM_1749479675960).format('HH:mm');
         const end = moment(event.UF_CRM_1749479687467).format('HH:mm');
         setNewEventStart(start)

@@ -68,7 +68,7 @@ function Main({isAdmin, user}) {
         eventsRef.current = events;
     }, [events]);
 
-    useEffect(() =>     {
+    useEffect(() => {
         const handleDealAdded = async (event) => {
             const {dealId} = event;
             try {
@@ -97,9 +97,9 @@ function Main({isAdmin, user}) {
             const {dealId} = event;
             try {
                 const deal = await getDeal(dealId);
-                if (deal.STAGE_ID === 'LOSE'){
+                if (deal.STAGE_ID === 'LOSE') {
                     handleDeleteEvent(dealId)
-                }else {
+                } else {
                     const selectedProduct = await getDeal(deal.UF_CRM_1751522804);
                     const newData = formatEvents([deal], [selectedProduct]);
                     setEvents((prev) => {
@@ -139,38 +139,39 @@ function Main({isAdmin, user}) {
     useEffect(() => {
         (async () => {
             if (!selectedDate) return;
-                setSecondLoading(true)
-                const firstDayCurrentMonth = new Date(
-                    selectedDate.getFullYear(),
-                    selectedDate.getMonth(),
-                    1
-                );
-                const firstDayNextMonth = new Date(
-                    selectedDate.getFullYear(),
-                    selectedDate.getMonth() + 1,
-                    1
-                );
-                const start = moment(firstDayCurrentMonth).format('YYYY-MM-DD');
-                const end = moment(firstDayNextMonth).format('YYYY-MM-DD');
-                const allFields = await fetItemsFields();
-                const dealUserFields = await getDealUserField();
-                const allDealsEvents = await fetchAllDeals(0, start, end);
-                const allDealsProperty = await fetchAllItems(2, isAdmin, user);
-                const allContacts = await fetchAllContacts();
-                const allUsers = await getAllUsers();
-                setResources(formatResources(allDealsProperty, allContacts));
-                setAllResources(formatResources(allDealsProperty, allContacts));
-                setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
-                setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
-                setAllUsers(allUsers);
-                setSelectedUsers(allUsers);
-                setDealUserFields(formatEventFileds(dealUserFields));
-                setAllContacts(allContacts);
-                setLoading(false);
-                setSecondLoading(false);
-                setSmartProcessFields(allFields);
+            setSecondLoading(true)
+            const firstDayCurrentMonth = new Date(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth(),
+                1
+            );
+            const firstDayNextMonth = new Date(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth() + 1,
+                1
+            );
+            const start = moment(firstDayCurrentMonth).format('YYYY-MM-DD');
+            const end = moment(firstDayNextMonth).format('YYYY-MM-DD');
+            const allFields = await fetItemsFields();
+            const dealUserFields = await getDealUserField();
+            const allDealsEvents = await fetchAllDeals(0, start, end);
+            const allDealsProperty = await fetchAllItems(2, isAdmin, user);
+            const allContacts = await fetchAllContacts();
+            const allUsers = await getAllUsers();
+            setResources(formatResources(allDealsProperty, allContacts));
+            setAllResources(formatResources(allDealsProperty, allContacts));
+            setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
+            setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
+            setAllUsers(allUsers);
+            setSelectedUsers(allUsers);
+            setDealUserFields(formatEventFileds(dealUserFields));
+            setAllContacts(allContacts);
+            setLoading(false);
+            setSecondLoading(false);
+            setSmartProcessFields(allFields);
         })();
     }, [selectedDate]);
+    console.log((events.filter((e)=>e.ID == 6200)))
     const handleHideAddModal = () => {
         setAddModalVisible(false);
         setSelectedProduct(null);
@@ -240,7 +241,7 @@ function Main({isAdmin, user}) {
                 totalPrice,
                 isAdmin ? user.ID : `contact_${user.ID}`,
                 isAdmin,
-                isAdmin ? user.ID : 22,
+                    isAdmin ? user.ID : 22,
                 (totalPrice) - flatFields.UF_CRM_1749559223646
             );
             setAddModalVisible(false);

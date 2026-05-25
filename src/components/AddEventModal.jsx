@@ -66,6 +66,8 @@ function AddEventModal({
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
+    console.log(formData
+    )
     return (
         <>
             <Toast ref={toast}/>
@@ -79,7 +81,7 @@ function AddEventModal({
                         <p>{productInfo?.title}</p>
                         <p>Արժեք: <strong>{((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity}</strong></p>
                         {productInfo?.UF_CRM_1754312563154 && <p>Հատուկ օրեր (շաբաթ/կիրակի/տոն): <strong>{specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0)}</strong></p>}
-                        <p>Ընդանուր: <strong>{(((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity) + (specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0))}</strong></p>
+                        <p>Գին գիշերակացի համար: <strong>{((((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity) + (specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0)) + (formData.UF_CRM_1778739878015 || 0))}</strong></p>
                     </div>
                 );
             }}
