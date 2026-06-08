@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import Main from "./components/Main.jsx";
 import Page404 from "./components/Page404.jsx";
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { Button } from "primereact/button";
-import { fetchContactByCode } from "../api.js";
+import {Dialog} from "primereact/dialog";
+import {InputText} from "primereact/inputtext";
+import {Button} from "primereact/button";
+import {fetchContactByCode} from "../api.js";
 
 const REACT_APP_MEMBER = import.meta.env.VITE_MEMBER;
 
@@ -17,109 +17,58 @@ function App() {
 
     const [code, setCode] = useState(localStorage.getItem('code') || '');
     const [phone, setPhone] = useState(localStorage.getItem('phone') || '');
-
     const [isCodeValid, setIsCodeValid] = useState(false);
-    const [loadingLogin, setLoadingLogin] = useState(true);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const source = params.get('source');
-
-        // через endeter
-        const isEndeter =
-            window.location.hostname.includes('endeter') ||
-            source === 'site';
-
-        setIsSourceSite(isEndeter);
+        setIsSourceSite(source === 'site');
     }, []);
 
     useEffect(() => {
         if (isSourceSite === null) return;
 
         if (isSourceSite) {
-            if (
-                typeof window.BX24 !== 'undefined' &&
-                typeof window.BX24.init === 'function'
-            ) {
+            if (typeof window.BX24 !== 'undefined' && typeof window.BX24.init === 'function') {
                 window.BX24.init(function () {
                     setAuth(window.BX24.getAuth());
-
                     window.BX24.callMethod('user.current', {}, function (res) {
                         setUser(res.data());
                     });
-
                     setAuthLoaded(true);
                 });
             } else {
-                console.warn(
-                    "BX24 չի գտնվել։ Հնարավոր է, ծրագիրը չի աշխատում Bitrix24 միջավայրում։"
-                );
+                console.warn("BX24 չի գտնվել։ Հնարավոր է, ծրագիրը չի աշխատում Bitrix24 միջավայրում։");
                 setShow404(true);
             }
         }
     }, [isSourceSite]);
 
     useEffect(() => {
-        if (authLoaded && auth.member_id !== REACT_APP_MEMBER) {
-            setShow404(true);
+        if (isSourceSite === false && code && phone) {
+            handleCodeSubmit();
         }
-    }, [authLoaded, auth.member_id]);
-
-    // автоматический логин
-    useEffect(() => {
-        if (isSourceSite !== false) return;
-
-        const autoLogin = async () => {
-            try {
-                if (!phone || !code) {
-                    setLoadingLogin(false);
-                    return;
-                }
-
-                const contact = await fetchContactByCode(code, phone);
-
-                if (contact?.length > 0) {
-                    setUser(contact[0]);
-                    setIsCodeValid(true);
-                } else {
-                    localStorage.removeItem('code');
-                    localStorage.removeItem('phone');
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoadingLogin(false);
-            }
-        };
-
-        autoLogin();
     }, [isSourceSite]);
 
+
     const handleCodeSubmit = async () => {
-        try {
-            const contact = await fetchContactByCode(code, phone);
-
-            if (contact?.length > 0) {
-                setUser(contact[0]);
-                setIsCodeValid(true);
-
-                localStorage.setItem('code', code);
-                localStorage.setItem('phone', phone);
-            } else {
-                alert("Սխալ հեռախոսահամար կամ գաղտնաբառ");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Սխալ");
+        const contact = await fetchContactByCode(code, phone);
+        if (contact.length > 0) {
+            setUser(contact[0]);
+            setIsCodeValid(true);
+            localStorage.setItem('code', code);
+            localStorage.setItem('phone', phone);
+        } else {
+            alert("Սխալ հեռախոսահամար կամ գաղտնաբառ");
         }
     };
 
-    // loading
-    if (isSourceSite === null || loadingLogin) {
-        return <div />;
-    }
+    const handleKeyDown = async (e) => {
+        if (e.key === 'Enter') {
+            await handleCodeSubmit();
+        }
+    };
 
-    // обычный сайт / endeter
     if (isSourceSite === false) {
         return (
             <>
@@ -129,62 +78,41 @@ function App() {
                     visible={!isCodeValid}
                     closable={false}
                     modal
-                    style={{ width: '400px' }}
+                    style={{width: '400px'}}
                     onHide={() => null}
                 >
                     <div className="p-fluid flex flex-column gap-3">
                         <InputText
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="Մուտքագրեք հեռախոսահամարը"
                         />
-
                         <InputText
                             type="password"
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="Գաղտնաբառը"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleCodeSubmit();
-                                }
-                            }}
                         />
-
-                        <Button
-                            label="Հաստատել"
-                            className="mt-3"
-                            onClick={handleCodeSubmit}
-                        />
+                        <Button label="Հաստատել" className="mt-3" onClick={handleCodeSubmit}/>
                     </div>
                 </Dialog>
-
-                {isCodeValid && (
-                    <Main
-                        user={user}
-                        isAdmin={false}
-                    />
-                )}
+                {isCodeValid && <Main user={user} isAdmin={false}/>}
             </>
         );
     }
 
-    // bitrix
     if (isSourceSite) {
-        if (show404) return <Page404 />;
-        if (Object.keys(user).length === 0) return <div />;
-
+        if (show404) return <Page404/>;
+        if (Object.keys(user).length === 0) return <div/>;
         if (auth.member_id) {
-            return (
-                <Main
-                    user={user}
-                    isAdmin={true}
-                />
-            );
+            return <Main user={user} isAdmin={true}/>;
         }
     }
-    // return <Main user={user} isAdmin={true}/>
+    // return <Main user={user} isAdmin={true}Z/>
     // return null;
 }
 
 export default App;
+

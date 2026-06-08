@@ -161,3 +161,27 @@ body {
   z-index: 9999;
   background: rgba(255, 255, 255, 0.5);
 }
+.loading-logo {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  animation: shake 0.3s infinite;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(3px) rotate(2deg);
+  }
+  75% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}

@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import React, {useState, useEffect} from 'react';
+import {Button} from "primereact/button";
+import {Dialog} from "primereact/dialog";
 import useWindowSize from "../hooks/useWindowSize.js";
-import { MultiSelect } from "primereact/multiselect";
-import { Dropdown } from "primereact/dropdown";
-import { InputTextarea } from "primereact/inputtextarea";
-import { InputText } from "primereact/inputtext";
-import { Checkbox } from "primereact/checkbox";
+import {MultiSelect} from "primereact/multiselect";
+import {Dropdown} from "primereact/dropdown";
+import {InputTextarea} from "primereact/inputtextarea";
+import {InputText} from "primereact/inputtext";
+import {Checkbox} from "primereact/checkbox";
 
-function Filters({ visible, onHide, properties, resources, setResources, allResources }) {
+function Filters({visible, onHide, properties, resources, setResources, allResources}) {
     const [formData, setFormData] = useState(() => {
         const saved = localStorage.getItem('filters');
         return saved ? JSON.parse(saved) : {};
     });
-    const { width } = useWindowSize();
+    const {width} = useWindowSize();
 
     useEffect(() => {
         localStorage.setItem('filters', JSON.stringify(formData));
     }, [formData]);
 
     const handleChange = (fieldName, value) => {
-        setFormData(prev => ({ ...prev, [fieldName]: value }));
+        setFormData(prev => ({...prev, [fieldName]: value}));
     };
+
     function formatUfString(str) {
         const parts = str.split('_');
         if (parts.length !== 2) return str.toUpperCase();
@@ -32,10 +33,12 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
         const secondPart = parts[1];
         return firstPart + '_' + secondPart;
     }
+    const noShowUfs = ['ufCrm_1751443093008','ufCrm_1751443418478','ufCrm_1751443503032','ufCrm_1751463409061','ufCrm_1753274901120','ufCrm_1778739878015',
+    'ufCrm_1749539326485','ufCrm_1749556703601','ufCrm_1749559223646','ufCrm_1749539142225','ufCrm_1749539611953','ufCrm_1749479675960','ufCrm_1749479687467']
     const ufOnly = Object.fromEntries(
-        Object.entries(properties).filter(([key]) =>
-            key.toLowerCase().startsWith('uf') || key === 'title' || key === 'opportunity'
-        )
+        Object.entries(properties).filter(([key]) =>{
+            return !noShowUfs.includes(key) &&  (key.toLowerCase().startsWith('uf') || key === 'title' || key === 'opportunity')
+        })
     );
     const ufKeys = Object.keys(ufOnly);
     const handleApply = () => {
@@ -100,7 +103,16 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
         onHide();
     };
 
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            if (e.key === 'Enter') {
+                handleApply();
+            }
+        };
 
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [allResources, formData, properties]);
     const handleClear = () => {
         setFormData({});
         setResources(allResources);
@@ -121,17 +133,23 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
             return null
         }
         if (fieldKey === 'opportunity') {
-            const range = value || { from: '', to: '' };
+            const range = value || {from: '', to: ''};
             return (
                 <div key={fieldKey} className="mb-3">
-                    <label className="block mb-1 font-semibold">{title || 'Opportunity'}</label>
+                    <label className="block mb-1 font-semibold">
+                        {title === 'Сумма'
+                            ? 'Գումար'
+                            : title === 'Название'
+                                ? 'Անվանում'
+                                : title || 'Opportunity'}
+                    </label>
                     <div className="flex gap-2">
                         <InputText
                             placeholder="Սկսած"
                             className="w-full"
                             value={range.from}
                             onChange={(e) =>
-                                handleChange(fieldKey, { ...range, from: e.target.value })
+                                handleChange(fieldKey, {...range, from: e.target.value})
                             }
                         />
                         <InputText
@@ -139,7 +157,7 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
                             className="w-full"
                             value={range.to}
                             onChange={(e) =>
-                                handleChange(fieldKey, { ...range, to: e.target.value })
+                                handleChange(fieldKey, {...range, to: e.target.value})
                             }
                         />
                     </div>
@@ -148,7 +166,11 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
         }
         return (
             <div key={fieldKey} className="mb-3">
-                {title && type !== 'file' && <label className="block mb-1 font-semibold">{title}</label>}
+                {title && type !== 'file' && <label className="block mb-1 font-semibold">{title === 'Сумма'
+                    ? 'Գումար'
+                    : title === 'Название'
+                        ? 'Անվանում'
+                        : title.replace('.' , '')}</label>}
                 {type === 'enumeration' ? (
                     isMultiple ? (
                         <MultiSelect
@@ -187,7 +209,7 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
                             />
                             {value && (
                                 <i
-                                    style={{top:'13px',right:'13px'}}
+                                    style={{top: '13px', right: '13px'}}
                                     className="pi pi-times absolute right-2 text-gray-400 cursor-pointer"
                                     onClick={() => handleChange(fieldKey, '')}
                                 />
@@ -198,13 +220,17 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
                         <div className="relative w-full">
                             <InputText
                                 value={value || ''}
-                                placeholder={title}
+                                placeholder={title === 'Сумма'
+                                    ? 'Գումար'
+                                    : title === 'Название'
+                                        ? 'Անվանում'
+                                        : title.replace('.' , '')}
                                 className="w-full pr-8"
                                 onChange={(e) => handleChange(fieldKey, e.target.value)}
                             />
                             {value && (
                                 <i
-                                    style={{top:'13px',right:'13px'}}
+                                    style={{top: '13px', right: '13px'}}
                                     className="pi pi-times absolute right-2 text-gray-400 cursor-pointer"
                                     onClick={() => handleChange(fieldKey, '')}
                                 />
@@ -225,7 +251,7 @@ function Filters({ visible, onHide, properties, resources, setResources, allReso
     };
     return (
         <Dialog
-            style={{ minWidth: width < 768 ? '95%' : '50%' }}
+            style={{minWidth: width < 768 ? '95%' : '50%'}}
             visible={visible}
             onHide={onHide}
             header="Որոնում"

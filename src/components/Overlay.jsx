@@ -1,10 +1,9 @@
 import React from 'react';
-import { ProgressSpinner } from 'primereact/progressspinner';
-
+import logo from '../assets/logo.jpg'
 function Overlay(props) {
     return (
-        <div class="overlay-loading">
-            <ProgressSpinner />
+        <div className="overlay-loading">
+            <img className="loading-logo" src={logo} alt=""/>
         </div>
     );
 }

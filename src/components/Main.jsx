@@ -4,7 +4,7 @@ import {
     addDeal, deleteEvent,
     fetchAllContacts,
     fetchAllDeals, fetchAllItems, fetItemsFields, getAllUsers, getDeal,
-    getDealUserField, updateDeal,
+    getDealUserField, sendAction, updateDeal,
 } from "../../api.js";
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -30,6 +30,7 @@ import echo from "../helpers/echo.js";
 import useWindowSize from "../hooks/useWindowSize.js";
 import moment from "moment";
 import Overlay from "./Overlay.jsx";
+import {applyFilters} from "../helpers/applyFilters.js";
 
 function Main({isAdmin, user}) {
     const [loading, setLoading] = useState(true);
@@ -71,6 +72,7 @@ function Main({isAdmin, user}) {
     useEffect(() => {
         const handleDealAdded = async (event) => {
             const {dealId} = event;
+            console.log(event)
             try {
                 const deal = await getDeal(dealId);
                 const selectedProduct = await getDeal(deal.UF_CRM_1751522804);
@@ -140,26 +142,45 @@ function Main({isAdmin, user}) {
         (async () => {
             if (!selectedDate) return;
             setSecondLoading(true)
+            const baseDate = !isAdmin
+                ? new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1)
+                : selectedDate;
+
             const firstDayCurrentMonth = new Date(
-                selectedDate.getFullYear(),
-                selectedDate.getMonth(),
+                baseDate.getFullYear(),
+                baseDate.getMonth(),
                 1
             );
+
             const firstDayNextMonth = new Date(
-                selectedDate.getFullYear(),
-                selectedDate.getMonth() + 1,
+                baseDate.getFullYear(),
+                baseDate.getMonth() + 1,
                 1
             );
+
             const start = moment(firstDayCurrentMonth).format('YYYY-MM-DD');
             const end = moment(firstDayNextMonth).format('YYYY-MM-DD');
-            const allFields = await fetItemsFields();
-            const dealUserFields = await getDealUserField();
-            const allDealsEvents = await fetchAllDeals(0, start, end);
-            const allDealsProperty = await fetchAllItems(2, isAdmin, user);
-            const allContacts = await fetchAllContacts();
-            const allUsers = await getAllUsers();
-            setResources(formatResources(allDealsProperty, allContacts));
-            setAllResources(formatResources(allDealsProperty, allContacts));
+            const [allFields ,dealUserFields,allDealsEvents,allDealsProperty ,allContacts,allUsers] = await Promise.all([
+                fetItemsFields(),
+                getDealUserField(),
+                fetchAllDeals(0, start, end),
+                fetchAllItems(2, isAdmin, user),
+                fetchAllContacts(),
+                getAllUsers()
+            ])
+            const savedFilters = JSON.parse(
+                localStorage.getItem('filters') || '{}'
+            );
+            const resources = formatResources(allDealsProperty, allContacts);
+
+            setResources(
+                applyFilters(
+                    resources,
+                    allFields,
+                    savedFilters
+                )
+            );
+            setAllResources(resources);
             setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
             setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
             setAllUsers(allUsers);
@@ -171,7 +192,6 @@ function Main({isAdmin, user}) {
             setSmartProcessFields(allFields);
         })();
     }, [selectedDate]);
-    console.log((events.filter((e)=>e.ID == 6200)))
     const handleHideAddModal = () => {
         setAddModalVisible(false);
         setSelectedProduct(null);
@@ -209,6 +229,8 @@ function Main({isAdmin, user}) {
         setResources(filteredResources);
     };
     const handleAddEvent = async (fields) => {
+        console.log(fields)
+        return
         const startToSend = getDateTimeString(newEventStart, fields.startTime);
         const endToSend = getDateTimeString(newEventEnd, fields.endTime);
         const specialDaysCount = getSpecialDaysCount(newEventStart, newEventEnd, holidays);
@@ -221,7 +243,7 @@ function Main({isAdmin, user}) {
         const specialPrice = specialDaysCount * (parseInt(selectedProduct.UF_CRM_1754312563154) || 0);
         const totalPrice = regularPrice + specialPrice;
         const hasOverlap = events.some(ev => {
-            if (+selectedProduct.id !== +ev.product.id) return false;
+            if (+selectedProduct.ID !== +ev.product.ID) return false;
             const evStart = new Date(ev.start);
             const evEnd = new Date(ev.end);
             return (new Date(startToSend) < evEnd && new Date(endToSend) > evStart);
@@ -230,6 +252,7 @@ function Main({isAdmin, user}) {
             toast.current.show({severity: 'error', summary: 'Սխալ', detail: 'Նշված ժամկետում կա գրանցում', life: 3000});
             return;
         }
+
         try {
             const flatFields = flattenFormData(fields);
             const deal = await addDeal(
@@ -244,6 +267,11 @@ function Main({isAdmin, user}) {
                     isAdmin ? user.ID : 22,
                 (totalPrice) - flatFields.UF_CRM_1749559223646
             );
+            console.log(deal)
+            await sendAction({
+                action: 'ADD',
+                dealId: deal
+            })
             setAddModalVisible(false);
             setSelectedProduct(null);
             setNewEventStart(null);
@@ -277,6 +305,10 @@ function Main({isAdmin, user}) {
                 totalPrice,
                 (totalPrice) - flatFields.UF_CRM_1749559223646,
             );
+            await sendAction({
+                action: 'UPDATE',
+                dealId: eventToShow.ID
+            })
             setEventToShow(null);
         } catch (error) {
             console.error('error to add event', error);
@@ -287,6 +319,10 @@ function Main({isAdmin, user}) {
     const handleDeleteEvent = async (id) => {
         setDeleteLoading(true);
         await deleteEvent(id);
+        await sendAction({
+            action: 'UPDATE',
+            dealId: id
+        })
         setEventToShow(null)
         setDeleteLoading(false)
     };
@@ -433,8 +469,9 @@ function Main({isAdmin, user}) {
                 eventStart={newEventStart}
                 eventEnd={newEventEnd}
             />)}
-            <div className={!isAdmin ? "custom-calendar" : ""}>
+            <div>
                 <FullCalendar
+                    eventDisplay="block"
                     datesSet={(info) => {
                         const newDate = moment(info.start).format('YYYY-MM-DD');
                         const currentDate = moment(selectedDate).format('YYYY-MM-DD');

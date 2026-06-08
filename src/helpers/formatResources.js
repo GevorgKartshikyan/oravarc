@@ -11,6 +11,7 @@ export const formatResources = (allSmartProcess, allContacts) => {
             id: item.ID,
             opportunity: item.OPPORTUNITY,
             contact,
+            NAME:item.TITLE
         };
     });
 };
