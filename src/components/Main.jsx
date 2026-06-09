@@ -229,8 +229,6 @@ function Main({isAdmin, user}) {
         setResources(filteredResources);
     };
     const handleAddEvent = async (fields) => {
-        console.log(fields)
-        return
         const startToSend = getDateTimeString(newEventStart, fields.startTime);
         const endToSend = getDateTimeString(newEventEnd, fields.endTime);
         const specialDaysCount = getSpecialDaysCount(newEventStart, newEventEnd, holidays);

@@ -50,7 +50,6 @@ function AddEventModal({
             "XML_ID": "324354de9dc32043a1cccd0e0be17c4f"
         }
     });
-    console.log(formData)
     const sortedFields = [...allFields]
         .filter(f => f.USER_TYPE_ID !== 'datetime' && f.FIELD_NAME !== 'UF_CRM_1749539216833' && f.title !== 'Ամրագրող' && !f?.title?.endsWith('-'));
     const idx262 = sortedFields.findIndex(f => f.ID === "262");
@@ -352,7 +351,7 @@ function AddEventModal({
                                     return;
                                 }
                                 if (!isNewContact && !selectedContact && isAdmin) {
-                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' || formData?.UF_CRM_1749479746448?.ID !== '48') {
+                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48') {
                                         toast.current.show({
                                             severity: 'error',
                                             summary: 'Սխալ',
@@ -363,7 +362,7 @@ function AddEventModal({
                                     }
                                 }
                                 if (isNewContact && (!newContactName || newContactPhones.length === 0) && isAdmin) {
-                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' || formData?.UF_CRM_1749479746448?.ID !== '48'){
+                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48'){
                                         toast.current.show({
                                             severity: 'error',
                                             summary: 'Սխալ',
