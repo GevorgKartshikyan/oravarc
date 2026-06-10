@@ -66,7 +66,6 @@ function AddEventModal({
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
-
     return (
         <>
             <Toast ref={toast}/>
@@ -87,6 +86,21 @@ function AddEventModal({
                     onHide={onHide} visible={visible}
                     style={{minWidth: width < 768 ? '95%' : '50%'}}>
                 <div className="flex flex-column gap-3 mt-1">
+                    {eventStart && eventEnd && (
+                        <div className="border-round bg-gray-100">
+                            <b>Օրեր:</b>{' '}
+                            {new Date(eventStart).toLocaleDateString()} —{' '}
+                            {(() => {
+                                const endDate = new Date(eventEnd);
+
+                                if (formData?.UF_CRM_1751462672002?.ID === "558") {
+                                    endDate.setDate(endDate.getDate() + 1);
+                                }
+
+                                return endDate.toLocaleDateString();
+                            })()}
+                        </div>
+                    )}
                     <div className="flex w-full gap-3">
                         <div className='w-full'>
                             <label htmlFor="start">Սկիզբ</label>

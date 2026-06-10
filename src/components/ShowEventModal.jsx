@@ -85,13 +85,23 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                             window.BX24.openPath(
                                 `/crm/deal/details/${event.ID}/`,
                                 function (result) {
-                                    console.log(result);
                                 }
                             );
                         }}>{event?.title}</p>
-                        <p>{moment(event.UF_CRM_1749479675960).format('DD.MM.YYYY')}  - {moment(event.UF_CRM_1749479687467).format('DD.MM.YYYY')}</p>
+                        <p>
+                            {moment(event.UF_CRM_1749479675960).format('DD.MM.YYYY')} -{' '}
+                            {(() => {
+                                const end = moment(event.UF_CRM_1749479687467);
+
+                                if (formData?.UF_CRM_1751462672002?.ID === "558") {
+                                    end.add(1, 'day');
+                                }
+
+                                return end.format('DD.MM.YYYY');
+                            })()}
+                        </p>
                         <div className='flex gap-2 align-items-center'>
-                            <p>Գումար  - {event.OPPORTUNITY}</p>
+                            <p>Գումար  - {event.OPPORTUNITY ? +event.OPPORTUNITY: ""}</p>
                             <p>Կանխավճար  - {event.UF_CRM_1749559223646}</p>
                             <p>Մնացորդ  - {event.UF_CRM_1750401051}</p>
                         </div>

@@ -76,7 +76,6 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                 );
         }
     };
-    console.log(product)
     return (
         <Dialog
             header={product?.title || product?.NAME || 'Ապրանքի մանրամասներ'}

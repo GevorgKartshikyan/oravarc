@@ -72,7 +72,6 @@ function Main({isAdmin, user}) {
     useEffect(() => {
         const handleDealAdded = async (event) => {
             const {dealId} = event;
-            console.log(event)
             try {
                 const deal = await getDeal(dealId);
                 const selectedProduct = await getDeal(deal.UF_CRM_1751522804);
@@ -263,9 +262,8 @@ function Main({isAdmin, user}) {
                 isAdmin ? user.ID : `contact_${user.ID}`,
                 isAdmin,
                     isAdmin ? user.ID : 22,
-                (totalPrice) - flatFields.UF_CRM_1749559223646
+                (totalPrice) - (flatFields.UF_CRM_1749559223646 || 0)
             );
-            console.log(deal)
             await sendAction({
                 action: 'ADD',
                 dealId: deal
