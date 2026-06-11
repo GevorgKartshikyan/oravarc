@@ -4,7 +4,7 @@ import {
     addDeal, deleteEvent,
     fetchAllContacts,
     fetchAllDeals, fetchAllItems, fetItemsFields, getAllUsers, getDeal,
-    getDealUserField, sendAction, updateDeal,
+    sendAction, updateDeal,
 } from "../../api.js";
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -58,6 +58,7 @@ function Main({isAdmin, user}) {
     const [selectedResource, setSelectedResource] = useState({});
     const [freeDays, setFreeDays] = useState([]);
     const [holidays, setHolidays] = useState([]);
+    const [allDealsProperty, setAllDealsProperty] = useState([]);
     const {width} = useWindowSize();
     const [selectedDate, setSelectedDate] = useState(null);
     useEffect(() => {
@@ -136,10 +137,42 @@ function Main({isAdmin, user}) {
         }
     }, [selectedResource, isAdmin]);
     const toast = useRef(null);
+    useEffect(() => {
+        (async ()=>{
+            const [allContacts,allDealsProperty,allFields,allUsers] = await Promise.all(
+               [
+                   fetchAllContacts([]),
+                   fetchAllItems(2, isAdmin, user),
+                   fetItemsFields(),
+                   getAllUsers()
+               ]
+            );
+            setAllDealsProperty(allDealsProperty);
+            const resources = formatResources(allDealsProperty, allContacts);
+
+            const savedFilters = JSON.parse(
+                localStorage.getItem('filters') || '{}'
+            );
+            setResources(
+                applyFilters(
+                    resources,
+                    allFields,
+                    savedFilters
+                )
+            );
+            setAllUsers(allUsers);
+            setSelectedUsers(allUsers);
+            setSmartProcessFields(allFields)
+            setDealUserFields(formatEventFileds(allFields));
+            setAllResources(resources);
+            setAllContacts(allContacts);
+        })()
+    }, []);
     // const []
     useEffect(() => {
         (async () => {
-            if (!selectedDate) return;
+            console.time('start')
+            if (!selectedDate || allContacts.length === 0) return;
             setSecondLoading(true)
             const baseDate = !isAdmin
                 ? new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1)
@@ -159,38 +192,21 @@ function Main({isAdmin, user}) {
 
             const start = moment(firstDayCurrentMonth).format('YYYY-MM-DD');
             const end = moment(firstDayNextMonth).format('YYYY-MM-DD');
-            const [allFields ,dealUserFields,allDealsEvents,allDealsProperty ,allContacts,allUsers] = await Promise.all([
-                fetItemsFields(),
-                getDealUserField(),
+            const [allDealsEvents] = await Promise.all([
                 fetchAllDeals(0, start, end),
-                fetchAllItems(2, isAdmin, user),
-                fetchAllContacts(),
-                getAllUsers()
-            ])
-            const savedFilters = JSON.parse(
-                localStorage.getItem('filters') || '{}'
-            );
-            const resources = formatResources(allDealsProperty, allContacts);
-
-            setResources(
-                applyFilters(
-                    resources,
-                    allFields,
-                    savedFilters
-                )
-            );
-            setAllResources(resources);
+            ]);
             setEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
             setFilteredEvents(formatEvents(allDealsEvents.filter((e) => e.STAGE_ID !== 'LOSE'), allDealsProperty));
-            setAllUsers(allUsers);
-            setSelectedUsers(allUsers);
-            setDealUserFields(formatEventFileds(dealUserFields));
-            setAllContacts(allContacts);
             setLoading(false);
             setSecondLoading(false);
-            setSmartProcessFields(allFields);
+            console.timeEnd('start')
         })();
-    }, [selectedDate]);
+    },  [
+        selectedDate,
+        allContacts,
+        isAdmin,
+        allDealsProperty
+    ]);
     const handleHideAddModal = () => {
         setAddModalVisible(false);
         setSelectedProduct(null);

@@ -76,6 +76,30 @@ function ShowProductModal({product, visible, onHide, smartProcessFields}) {
                 );
         }
     };
+
+    const renderedFields = Object.entries(smartProcessFields)
+        .filter(([key]) => key.startsWith('ufCrm'))
+        .map(([key, field]) => {
+            const value = product[field.upperName];
+
+            const isEmpty =
+                value === null ||
+                value === undefined ||
+                (typeof value === 'string' && value.trim() === '') ||
+                (Array.isArray(value) && value.length === 0);
+
+            if (isEmpty) return null;
+
+            return {
+                key,
+                field,
+                value,
+                title: field.title || key,
+                upperName: field.upperName,
+                type: field.type
+            };
+        })
+        .filter(Boolean).map((e)=>e.upperName);
     return (
         <Dialog
             header={product?.title || product?.NAME || 'Ապրանքի մանրամասներ'}

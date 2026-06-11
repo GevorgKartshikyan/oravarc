@@ -110,7 +110,7 @@ function App() {
             return <Main user={user} isAdmin={true}/>;
         }
     }
-    // return <Main user={user} isAdmin={true}Z/>
+    // return <Main user={user} isAdmin={true}/>
     // return null;
 }
 

@@ -4,7 +4,7 @@ const REACT_APP_BASE_URL = import.meta.env.VITE_API_URL_BX
 const BATCH_SIZE = 50;
 const fetchDealCount = async (categoryId, startDate, endDate) => {
     const response = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.list.json`, {
-        select: ['ID','UF_CRM_1749479675960','UF_CRM_1749479675960'],
+        select: ['ID', 'UF_CRM_1749479675960', 'UF_CRM_1749479675960'],
         filter: {
             CATEGORY_ID: categoryId,
             '>=UF_CRM_1749479675960': startDate,
@@ -40,6 +40,7 @@ export const fetchAllDeals = async (categoryId, startDate, endDate) => {
     const totalLeads = await fetchDealCount(categoryId, startDate, endDate);
     let allDeals = [];
     let start = 0;
+    const ufs = ['UF_CRM_1751522804', 'UF_CRM_1749479675960', 'UF_CRM_1749479687467', 'UF_CRM_1750320738750', 'UF_CRM_1751462672002', 'UF_CRM_1751462695577', 'UF_CRM_1751462881729', 'UF_CRM_1751463409061', 'UF_CRM_1751885344112', 'UF_CRM_1753274901120', 'UF_CRM_1778739878015', 'UF_CRM_1749539326485', 'UF_CRM_1749556703601', 'UF_CRM_1749559223646', 'UF_CRM_1749539142225', 'UF_CRM_1749539547147', 'UF_CRM_1749539611953', 'UF_CRM_1749479746448']
     while (start < totalLeads) {
         const batchRequests = [];
         const requestsNeeded = Math.min(BATCH_SIZE, Math.ceil((totalLeads - start) / BATCH_SIZE));
@@ -58,7 +59,7 @@ export const fetchAllDeals = async (categoryId, startDate, endDate) => {
         }
         const batchResponse = await axios.post(`${REACT_APP_BASE_URL}/batch.json`, {
             cmd: batchRequests.reduce((acc, req, idx) => {
-                const select = ["ID", 'TITLE', "UF_*", 'CATEGORY_ID','ASSIGNED_BY_ID','CONTACT_ID','STAGE_ID','OPPORTUNITY'];
+                const select = ["ID", 'TITLE', 'CATEGORY_ID', 'ASSIGNED_BY_ID', 'CONTACT_ID', 'STAGE_ID', 'OPPORTUNITY', ...ufs];
                 const selectStr = select.map(id => `select[]=${id}`).join('&');
                 acc[`req_${idx}`] = `${req.method}?start=${req.params.start}${selectStr}&filter[CATEGORY_ID]=${categoryId}&filter[>UF_CRM_1749479675960]=${req.params.filter['>=UF_CRM_1749479675960']}&filter[<UF_CRM_1749479687467]=${req.params.filter['<=UF_CRM_1749479687467']}`;
                 return acc;
@@ -76,17 +77,20 @@ export const fetchAllDeals = async (categoryId, startDate, endDate) => {
     }
     return allDeals
 };
-const fetchContactCount = async () => {
+const fetchContactCount = async (ids) => {
     const response = await axios.post(`${REACT_APP_BASE_URL}/crm.contact.list`, {
         select: ['ID'],
+        filter: {
+            "ID":ids
+        }
     });
     if (response.data.error) {
         throw new Error(response.data.error_description);
     }
     return response.data.total;
 };
-export const fetchAllContacts = async () => {
-    const totalDeals = await fetchContactCount();
+export const fetchAllContacts = async (ids) => {
+    const totalDeals = await fetchContactCount(ids);
     let allContacts = [];
     let start = 0;
     while (start < totalDeals) {
@@ -97,7 +101,7 @@ export const fetchAllContacts = async () => {
                 method: 'crm.contact.list',
                 params: {
                     start: start + i * BATCH_SIZE,
-                    select: ['ID', 'TITLE', 'UF_CRM_1744112456076', 'PHONE',"NAME","LAST_NAME"],
+                    select: ['ID', 'PHONE', "NAME", "LAST_NAME"],
 
                 },
             });
@@ -106,10 +110,11 @@ export const fetchAllContacts = async () => {
             cmd: batchRequests.reduce((acc, req, idx) => {
                 const {select} = req.params;
                 const selectStr = select.map(id => `select[]=${id}`).join('&');
+                const idStr = ids.map(id => `filter[ID][]=${id}`).join('&');
                 // const filterStr = Object.entries(req.params.filter)
                 //     .map(([key, val]) => `filter[${key}]=${val}`)
                 //     .join('&');
-                acc[`req_${idx}`] = `${req.method}?start=${req.params.start}&${selectStr}`;
+                acc[`req_${idx}`] = `${req.method}?start=${req.params.start}&${idStr}&${selectStr}`;
                 return acc;
             }, {})
         });
@@ -198,7 +203,7 @@ export const addDeal = async (start, end, daysCount, productId, ufs, opportunity
             }
         },
     });
-    return  deal.result;
+    return deal.result;
     // const {data: deal} = await axios.post(`${REACT_APP_BASE_URL}/crm.deal.get`, {
     //     id: dealId.result
     // })
@@ -255,7 +260,7 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
     const totalItems = await fetchItemsCount(entity, isAdmin, user);
     let allItems = [];
     let start = 0;
-
+    const ufs = ['UF_CRM_1751443002215', 'UF_CRM_1751443093008', 'UF_CRM_1751443363585', 'UF_CRM_1751443418478', 'UF_CRM_1751443439034', 'UF_CRM_1751443480631', 'UF_CRM_1751443503032', 'UF_CRM_1751443594433', 'UF_CRM_1751443896719', 'UF_CRM_1754312563154', 'UF_CRM_1778739878015', 'UF_CRM_1749557997354', 'UF_CRM_1749558546055', 'UF_CRM_1749556741052']
     const filter = {
         CATEGORY_ID: 2
     };
@@ -271,8 +276,7 @@ export const fetchAllItems = async (entity, isAdmin, user) => {
             const filterParams = Object.entries(filter)
                 .map(([key, value]) => `filter[${key}]=${value}`)
                 .join('&');
-
-            const select = ["ID", "TITLE","OPPORTUNITY",'UF_*'];
+            const select = ["ID",'CONTACT_ID', "TITLE", "OPPORTUNITY", ...ufs];
             const selectStr = select.map(id => `select[]=${id}`).join('&');
             batchRequests.push({
                 key: `req_${i}`,
@@ -327,8 +331,8 @@ export const fetchContactByCode = async (code, phone) => {
     })
     return data.result
 }
-export const sendAction = async (formData)=>{
-    const {data} = await axios.post(`https://prod.bitrix-24.am/Oravardz/project/public/api/deal-actions`,{
+export const sendAction = async (formData) => {
+    const {data} = await axios.post(`https://prod.bitrix-24.am/Oravardz/project/public/api/deal-actions`, {
         action: formData.action,
         dealId: formData.dealId,
     });

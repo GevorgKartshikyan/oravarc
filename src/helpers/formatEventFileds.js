@@ -1,18 +1,27 @@
 export const formatEventFileds = (object) => {
-    const keys = Object.keys(object);
     const result = [];
-    keys.forEach((key) => {
+
+    Object.keys(object).forEach((key) => {
         const field = object[key];
-        if (field.title.startsWith('UF_CRM') && !field.filterLabel.startsWith('.')) {
-            result.push({
-                FIELD_NAME:key,
-                USER_TYPE_ID:field.type,
-                MULTIPLE:field.isMultiple ? 'Y' : 'N',
-                LIST:field.items,
-                title:field.filterLabel,
-                MANDATORY:field.isRequired ? 'Y' : 'N'
-            });
-        }
-    })
+
+        // берём только кастомные CRM поля
+        if (!key.startsWith('ufCrm_') && !key.startsWith('UF_CRM_')) return;
+
+        // защита от мусора
+        if (!field || !field.filterLabel) return;
+
+        // твоя логика фильтра
+        if (field.filterLabel.startsWith('.')) return;
+
+        result.push({
+            FIELD_NAME: field.upperName || key,
+            USER_TYPE_ID: field.type,
+            MULTIPLE: field.isMultiple ? 'Y' : 'N',
+            LIST: field.items || [],
+            title: field.filterLabel,
+            MANDATORY: field.isRequired ? 'Y' : 'N'
+        });
+    });
+
     return result;
-}
+};
