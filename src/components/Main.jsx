@@ -32,7 +32,7 @@ import moment from "moment";
 import Overlay from "./Overlay.jsx";
 import {applyFilters} from "../helpers/applyFilters.js";
 
-function Main({isAdmin, user}) {
+function Main({isAdmin, user,isAgent,eventsToShow}) {
     const [loading, setLoading] = useState(true);
     const [secondLoading, setSecondLoading] = useState(false);
     const [events, setEvents] = useState([]);
@@ -142,7 +142,7 @@ function Main({isAdmin, user}) {
             const [allContacts,allDealsProperty,allFields,allUsers] = await Promise.all(
                [
                    fetchAllContacts([]),
-                   fetchAllItems(2, isAdmin, user),
+                   fetchAllItems(2, isAdmin, user,isAgent,eventsToShow),
                    fetItemsFields(),
                    getAllUsers()
                ]
@@ -586,8 +586,13 @@ function Main({isAdmin, user}) {
                     ]}
                     height="auto"
                     eventClick={(info) => {
-                        setSelectedProduct(info.event._def.extendedProps.product)
                         const creator = info.event._def.extendedProps.UF_CRM_1749565990368
+                        if (isAgent) {
+                          if (creator !== `contact_${user.ID}`){
+                              return;
+                          }
+                        }
+                        setSelectedProduct(info.event._def.extendedProps.product)
                         if (!isAdmin && creator !== `contact_${user.ID}`) {
                             setIsOtherPerson(true)
                         } else {

@@ -18,7 +18,8 @@ function App() {
     const [code, setCode] = useState(localStorage.getItem('code') || '');
     const [phone, setPhone] = useState(localStorage.getItem('phone') || '');
     const [isCodeValid, setIsCodeValid] = useState(false);
-
+    const [isAgent, setIsAgent] = useState(false);
+    const [eventsToShow, setEventsToShow] = useState([]);
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const source = params.get('source');
@@ -54,6 +55,10 @@ function App() {
     const handleCodeSubmit = async () => {
         const contact = await fetchContactByCode(code, phone);
         if (contact.length > 0) {
+            if (contact[0].TYPE_ID === 'UC_M9PAJB') {
+                setIsAgent(true);
+                setEventsToShow(contact[0].UF_CRM_1780929026 || [])
+            }
             setUser(contact[0]);
             setIsCodeValid(true);
             localStorage.setItem('code', code);
@@ -98,7 +103,12 @@ function App() {
                         <Button label="Հաստատել" className="mt-3" onClick={handleCodeSubmit}/>
                     </div>
                 </Dialog>
-                {isCodeValid && <Main user={user} isAdmin={false}/>}
+                {isCodeValid && (<Main
+                        isAgent={isAgent}
+                        eventsToShow={eventsToShow}
+                        user={user}
+                        isAdmin={false}/>
+                )}
             </>
         );
     }
@@ -107,7 +117,12 @@ function App() {
         if (show404) return <Page404/>;
         if (Object.keys(user).length === 0) return <div/>;
         if (auth.member_id) {
-            return <Main user={user} isAdmin={true}/>;
+            return (<Main
+                isAgent={isAgent}
+                eventsToShow={eventsToShow}
+                user={user}
+                isAdmin={true}
+            />);
         }
     }
     // return <Main user={user} isAdmin={true}/>
