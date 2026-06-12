@@ -365,7 +365,7 @@ function AddEventModal({
                                     return;
                                 }
                                 if (!isNewContact && !selectedContact && isAdmin) {
-                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48') {
+                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48' && formData?.UF_CRM_1749479746448?.ID !== '46') {
                                         toast.current.show({
                                             severity: 'error',
                                             summary: 'Սխալ',
@@ -376,7 +376,7 @@ function AddEventModal({
                                     }
                                 }
                                 if (isNewContact && (!newContactName || newContactPhones.length === 0) && isAdmin) {
-                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48'){
+                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48' && formData?.UF_CRM_1749479746448?.ID !== '46'){
                                         toast.current.show({
                                             severity: 'error',
                                             summary: 'Սխալ',
