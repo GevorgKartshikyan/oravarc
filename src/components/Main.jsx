@@ -149,7 +149,6 @@ function Main({isAdmin, user,isAgent,eventsToShow}) {
             );
             setAllDealsProperty(allDealsProperty);
             const resources = formatResources(allDealsProperty, allContacts);
-
             const savedFilters = JSON.parse(
                 localStorage.getItem('filters') || '{}'
             );
@@ -277,7 +276,7 @@ function Main({isAdmin, user,isAgent,eventsToShow}) {
                 totalPrice,
                 isAdmin ? user.ID : `contact_${user.ID}`,
                 isAdmin,
-                    isAdmin ? user.ID : 22,
+                    flatFields?.ASSIGNED_BY_ID?.id || 22,
                 (totalPrice) - (flatFields.UF_CRM_1749559223646 || 0)
             );
             await sendAction({
@@ -446,6 +445,7 @@ function Main({isAdmin, user,isAgent,eventsToShow}) {
             />}
             {eventToShow && (
                 <ShowEventModal
+                    isAdmin={isAdmin}
                     allUsers={allUsers}
                     isOtherPerson={isOtherPerson}
                     handleUpdateEvent={handleUpdateEvent}
@@ -468,6 +468,8 @@ function Main({isAdmin, user,isAgent,eventsToShow}) {
                 />
             )}
             {addModalVisible && (<AddEventModal
+                user={user}
+                allUsers={allUsers}
                 holidays={holidays}
                 isAdmin={isAdmin}
                 allFields={dealUserFields}

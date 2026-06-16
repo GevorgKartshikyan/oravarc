@@ -11,7 +11,7 @@ export const formatEventFileds = (object) => {
         if (!field || !field.filterLabel) return;
 
         // твоя логика фильтра
-        if (field.filterLabel.startsWith('.')) return;
+        if (field.filterLabel.startsWith('.') || field.filterLabel.startsWith('UF_CRM_') ) return;
 
         result.push({
             FIELD_NAME: field.upperName || key,

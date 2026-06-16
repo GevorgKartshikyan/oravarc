@@ -185,3 +185,161 @@ body {
     transform: translateX(0) rotate(0deg);
   }
 }
+/**/
+/* =====================
+   PriceSummary
+======================== */
+.price-summary {
+  border: 1.5px solid #c7d2fe;
+  border-radius: 10px;
+  background: #f8f9ff;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.ps-header {
+  padding: 14px 16px 10px;
+}
+
+.ps-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ps-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ps-grand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1d23;
+}
+
+.ps-breakdown-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ps-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ps-item-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.ps-item-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4361ee;
+}
+
+.ps-toggle {
+  background: none;
+  border: none;
+  color: #4361ee;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 0 2px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ps-toggle:hover { text-decoration: underline; }
+
+/* Per-day table */
+.ps-days {
+  border-top: 1px solid #e0e7ff;
+  background: #fff;
+}
+
+.ps-days-header,
+.ps-day-row,
+.ps-days-total {
+  display: grid;
+  grid-template-columns: 1fr 1fr 90px 80px;
+  gap: 8px;
+  padding: 7px 16px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.ps-days-header {
+  background: #eef1fd;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ps-day-row {
+  border-bottom: 1px solid #f0f4ff;
+  color: #374151;
+}
+
+.ps-day-row.has-season {
+  background: #f0f4ff;
+}
+
+.ps-day-row:last-of-type {
+  border-bottom: none;
+}
+
+.ps-day-date {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.ps-weekday {
+  background: #e0e7ff;
+  color: #4361ee;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.ps-season-name {
+  font-size: 12px;
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.ps-day-price {
+  font-weight: 600;
+  color: #1a1d23;
+}
+
+.ps-day-night {
+  color: #6b7280;
+}
+
+.ps-days-total {
+  background: #eef1fd;
+  font-weight: 700;
+  color: #1a1d23;
+  border-top: 1.5px solid #c7d2fe;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Source tag */
+.ps-source {
+  padding: 6px 16px 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  border-top: 1px solid #e0e7ff;
+  background: #f8f9ff;
+}

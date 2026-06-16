@@ -12,7 +12,7 @@ function App() {
     const [show404, setShow404] = useState(false);
     const [authLoaded, setAuthLoaded] = useState(false);
     const [auth, setAuth] = useState({});
-    const [user, setUser] = useState({});
+    const [user, setUser] = useState({ID:16});
     const [isSourceSite, setIsSourceSite] = useState(null);
 
     const [code, setCode] = useState(localStorage.getItem('code') || '');

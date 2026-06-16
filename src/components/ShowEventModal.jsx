@@ -10,12 +10,13 @@ import {Checkbox} from "primereact/checkbox";
 import {InputMask} from "primereact/inputmask";
 import moment from "moment";
 
-function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading,allContacts, allFields ,btnLoading,handleUpdateEvent,isOtherPerson,allUsers}) {
+function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading,allContacts, allFields ,btnLoading,handleUpdateEvent,isOtherPerson,allUsers,isAdmin}) {
     const { width } = useWindowSize();
     const [formData, setFormData] = useState({});
     const [newEventStart, setNewEventStart] = useState('');
     const [newEventEnd, setNewEventEnd] = useState('');
     const [contact, setContact] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(allUsers.find((e)=>+e.id === +event.ASSIGNED_BY_ID));
     useEffect(()=>{
         const contact = allContacts.find(item => +item.ID === +event.CONTACT_ID);
         setContact(contact);
@@ -84,7 +85,7 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                         <p style={{cursor: 'pointer'}} onClick={()=>{
                             window.BX24.openPath(
                                 `/crm/deal/details/${event.ID}/`,
-                                function (result) {
+                                function () {
                                 }
                             );
                         }}>{event?.title}</p>
@@ -122,6 +123,28 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                 <p><strong>Պատասխանատու</strong></p>
                 <p>{allUsers.find((e)=>+e.id === +event.ASSIGNED_BY_ID).title || 'Հեռացված է'}</p>
             </div>
+            <div className='mb-3'>
+                <p><strong>Ամրագրող</strong></p>
+                <p>
+                    {(() => {
+                        const rawId = event.UF_CRM_1749565990368;
+
+                        if (typeof rawId === 'string' && rawId.startsWith('contact_')) {
+                            const contactId = rawId.replace('contact_', '');
+
+                            const name = allContacts.find(
+                                (contact) => +contact.ID === +contactId
+                            )?.FULL_NAME || '';
+
+                            return name;
+                        }
+
+                        return allUsers.find(
+                            (user) => +user.id === +rawId
+                        )?.title || '';
+                    })()}
+                </p>
+            </div>
             <div className="flex flex-column gap-3">
                 <div className="flex w-full gap-3">
                     <div className='w-full'>
@@ -147,6 +170,19 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                         />
                     </div>
                 </div>
+                {isAdmin && (
+                    <div className="w-full mt-2">
+                        <label className="block mb-1">Պատասխանատու</label>
+                        <Dropdown
+                            value={selectedUser}
+                            options={allUsers || []}
+                            optionLabel="title"
+                            placeholder="Ընտրել օգտատիրոջը"
+                            className="w-full"
+                            onChange={(e) => setSelectedUser(e.value)}
+                        />
+                    </div>
+                )}
                 <div className='flex flex-wrap gap-3'>
             {allFields.filter(field => field.USER_TYPE_ID !== 'datetime' && field.FIELD_NAME !== 'UF_CRM_1751885344112'  && field.FIELD_NAME !== 'UF_CRM_1749539216833' && field.title !== 'Ամրագրող' && !field.title.endsWith('-')).map(field => {
                 const {
@@ -220,6 +256,8 @@ function ShowEventModal({ visible, onHide, event,handleDeleteEvent,deleteLoading
                             startTime: newEventStart,
                             endTime: newEventEnd,
                             ...formData,
+                            ASSIGNED_BY_ID: selectedUser,
+
                         })}/>
                 <Button loading={deleteLoading} label="Ջնջել" icon="pi pi-trash" className="p-button-danger"
                         onClick={() => handleDeleteEvent(event.ID)}/>

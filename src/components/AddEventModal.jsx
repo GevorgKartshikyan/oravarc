@@ -13,13 +13,13 @@ import {MultiSelect} from "primereact/multiselect";
 import {Toast} from "primereact/toast";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import {getDaysDifference} from "../helpers/formatDate.js";
-import moment from "moment";
 import {FileUpload} from "primereact/fileupload";
-import getSpecialDaysCount from "../helpers/getSpecialDaysCount.js";
+import PriceSummary from "./PriceSummary.jsx";
+import { calculateBookingPrice } from "../helpers/calculatePrice.js";
+
 function AddEventModal({
                            visible, handleAddEvent, addLoading, onHide, productInfo,
-                           allContacts, allFields,isAdmin,product,eventEnd,eventStart,holidays
+                           allContacts, allFields, isAdmin, product, eventEnd, eventStart, allUsers, user
                        }) {
     const {width} = useWindowSize()
     const [newEventStart, setNewEventStart] = useState('12:00');
@@ -32,6 +32,9 @@ function AddEventModal({
     const [isNewContact, setIsNewContact] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [btnLoading, setBtnLoading] = useState(false);
+    const [persons, setPersons] = useState(1);
+    const [selectedUser, setSelectedUser] = useState(allUsers.find((e) => +e.id === +user.ID) || null);
+
     const toast = useRef(null);
     const searchContacts = (event) => {
         const query = event.query.toLowerCase();
@@ -41,6 +44,7 @@ function AddEventModal({
         );
         setFilteredContacts(results);
     };
+
     const [formData, setFormData] = useState({
         "UF_CRM_1749479746448": {
             "ID": "44",
@@ -50,8 +54,10 @@ function AddEventModal({
             "XML_ID": "324354de9dc32043a1cccd0e0be17c4f"
         }
     });
+
     const sortedFields = [...allFields]
         .filter(f => f.USER_TYPE_ID !== 'datetime' && f.FIELD_NAME !== 'UF_CRM_1749539216833' && f.title !== 'Ամրագրող' && !f?.title?.endsWith('-'));
+
     const idx262 = sortedFields.findIndex(f => f.ID === "262");
     const idx251 = sortedFields.findIndex(f => f.ID === "252");
     if (idx262 !== -1 && idx251 !== -1 && idx262 !== idx251 + 1) {
@@ -63,44 +69,51 @@ function AddEventModal({
         const [f234] = sortedFields.splice(idx234, 1);
         sortedFields.push(f234);
     }
+
     const handleChange = (fieldName, value) => {
         setFormData(prev => ({...prev, [fieldName]: value}));
     };
+
+    // Calculate total for dialog header
+    const { grandTotal } = calculateBookingPrice(eventStart, eventEnd, persons, productInfo)
     return (
         <>
             <Toast ref={toast}/>
-            <Dialog className='modal-dialog' header={() => {
-                let specialDaysCount = getSpecialDaysCount(eventStart,eventEnd,holidays);
-                if (!productInfo?.UF_CRM_1754312563154) {
-                    specialDaysCount = 0;
-                }
-                return (
+            <Dialog
+                className='modal-dialog'
+                header={() => (
                     <div>
-                        <p>{productInfo?.title}</p>
-                        <p>Արժեք: <strong>{((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity}</strong></p>
-                        {productInfo?.UF_CRM_1754312563154 && <p>Հատուկ օրեր (շաբաթ/կիրակի/տոն): <strong>{specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0)}</strong></p>}
-                        <p>Գին գիշերակացի համար: <strong>{((((getDaysDifference(eventStart, eventEnd) || 1) - specialDaysCount) * productInfo?.opportunity) + (specialDaysCount * (parseInt(productInfo?.UF_CRM_1754312563154) || 0)) + (formData.UF_CRM_1778739878015 || 0))}</strong></p>
+                        <p style={{ fontWeight: 700, fontSize: 16 }}>{productInfo?.title}</p>
+                        <p style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>
+                            Ընդհանուր գին:{' '}
+                            <strong style={{ color: '#4361ee', fontSize: 16 }}>
+                                {grandTotal.toLocaleString()} ֏
+                            </strong>
+                        </p>
                     </div>
-                );
-            }}
-                    onHide={onHide} visible={visible}
-                    style={{minWidth: width < 768 ? '95%' : '50%'}}>
+                )}
+                onHide={onHide}
+                visible={visible}
+                style={{minWidth: width < 768 ? '95%' : '50%'}}
+            >
                 <div className="flex flex-column gap-3 mt-1">
+
+                    {/* Date range display */}
                     {eventStart && eventEnd && (
-                        <div className="border-round bg-gray-100">
+                        <div className="border-round bg-gray-100 p-2">
                             <b>Օրեր:</b>{' '}
                             {new Date(eventStart).toLocaleDateString()} —{' '}
                             {(() => {
                                 const endDate = new Date(eventEnd);
-
                                 if (formData?.UF_CRM_1751462672002?.ID === "558") {
                                     endDate.setDate(endDate.getDate() + 1);
                                 }
-
                                 return endDate.toLocaleDateString();
                             })()}
                         </div>
                     )}
+
+                    {/* Check-in / check-out times */}
                     <div className="flex w-full gap-3">
                         <div className='w-full'>
                             <label htmlFor="start">Սկիզբ</label>
@@ -125,29 +138,74 @@ function AddEventModal({
                             />
                         </div>
                     </div>
-                    <div className="relative w-full">
-                        {isAdmin && <AutoComplete
-                            inputClassName='w-full'
-                            value={selectedContact || ''}
-                            suggestions={filteredContacts}
-                            completeMethod={searchContacts}
-                            field="FULL_NAME"
-                            placeholder="Որոնել հաճախորդին"
+
+                    {/* Persons count */}
+                    <div>
+                        <label className="block mb-1">Հյուրերի քանակ</label>
+                        <InputNumber
+                            value={persons}
+                            min={1}
+                            max={99}
+                            showButtons
+                            buttonLayout="horizontal"
+                            decrementButtonClassName="p-button-secondary"
+                            incrementButtonClassName="p-button-secondary"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
                             className="w-full"
-                            onChange={(e) => {
-                                setSelectedContact(e.value);
-                                setIsNewContact(false);
-                            }}
-                            itemTemplate={(item) => (
-                                <div className="flex justify-between">
-                                    <span>{item.FULL_NAME}</span>
-                                    <span className="text-sm text-gray-500">{item.PHONE}</span>
-                                </div>
-                            )}
-                            onInput={(e) => {
-                                setSearchQuery(e.target.value);
-                            }}
-                        />}
+                            onChange={(e) => setPersons(e.value || 1)}
+                        />
+                    </div>
+
+                    {/* ── PRICE BREAKDOWN ── */}
+                    <PriceSummary
+                        formData={formData}
+                        eventStart={eventStart}
+                        eventEnd={eventEnd}
+                        persons={persons}
+                        productInfo={productInfo}
+                    />
+
+                    {/* Contact search */}
+                    <div className="relative w-full">
+                        {isAdmin && (
+                            <AutoComplete
+                                inputClassName='w-full'
+                                value={selectedContact || ''}
+                                suggestions={filteredContacts}
+                                completeMethod={searchContacts}
+                                field="FULL_NAME"
+                                placeholder="Որոնել հաճախորդին"
+                                className="w-full"
+                                onChange={(e) => {
+                                    setSelectedContact(e.value);
+                                    setIsNewContact(false);
+                                }}
+                                itemTemplate={(item) => (
+                                    <div className="flex justify-between">
+                                        <span>{item.FULL_NAME}</span>
+                                        <span className="text-sm text-gray-500">{item.PHONE}</span>
+                                    </div>
+                                )}
+                                onInput={(e) => {
+                                    setSearchQuery(e.target.value);
+                                }}
+                            />
+                        )}
+
+                        {isAdmin && (
+                            <div className="w-full mt-2">
+                                <label className="block mb-1">Պատասխանատու</label>
+                                <Dropdown
+                                    value={selectedUser}
+                                    options={allUsers || []}
+                                    optionLabel="title"
+                                    placeholder="Ընտրել օգտատիրոջը"
+                                    className="w-full"
+                                    onChange={(e) => setSelectedUser(e.value)}
+                                />
+                            </div>
+                        )}
 
                         {searchQuery.length > 0 && !isNewContact && (
                             <div className="mt-2 border-t border-gray-200 pt-2">
@@ -158,29 +216,23 @@ function AddEventModal({
                                     onClick={() => {
                                         const lettersOnly = /^[\p{L}\s]+$/u;
                                         const numbersAndPlus = /^[\d+]+$/;
-
                                         if (lettersOnly.test(searchQuery)) {
                                             setNewContactName(searchQuery);
                                         } else if (numbersAndPlus.test(searchQuery)) {
-
                                             setNewContactPhone(searchQuery);
                                         } else {
                                             setNewContactName(searchQuery);
                                         }
-
                                         setIsNewContact(true);
                                         setSelectedContact(null);
                                     }}
                                 />
-
                             </div>
                         )}
 
                         {isNewContact && (
                             <div className="mt-2 flex flex-column gap-2">
-                                <label htmlFor="newContactName" className="block mb-1">
-                                    Անուն Ազգանուն
-                                </label>
+                                <label htmlFor="newContactName" className="block mb-1">Անուն Ազգանուն</label>
                                 <InputText
                                     id='newContactName'
                                     placeholder="Անուն Ազգանուն"
@@ -188,9 +240,7 @@ function AddEventModal({
                                     value={newContactName}
                                     onChange={(e) => setNewContactName(e.target.value)}
                                 />
-                                <label htmlFor="newContactPhone" className="block mb-1">
-                                    Հեռախոսահամար
-                                </label>
+                                <label htmlFor="newContactPhone" className="block mb-1">Հեռախոսահամար</label>
                                 <div className='flex gap-2 align-items-center align-self-stretch'>
                                     <PhoneInput
                                         enableSearch
@@ -200,9 +250,7 @@ function AddEventModal({
                                         id="phone"
                                         country={'am'}
                                         value={newContactPhone}
-                                        onChange={(e) => {
-                                            setNewContactPhone(e)
-                                        }}
+                                        onChange={(e) => setNewContactPhone(e)}
                                     />
                                     <Button
                                         icon="pi pi-plus"
@@ -215,7 +263,7 @@ function AddEventModal({
                                     />
                                 </div>
                                 {newContactPhones.length > 0 && (
-                                    <div className="">
+                                    <div>
                                         <p>Ավելացված համարներ</p>
                                         <ul className="p-0 flex gap-2">
                                             {newContactPhones.map((phone, index) => (
@@ -224,9 +272,7 @@ function AddEventModal({
                                                     <Button
                                                         icon="pi pi-times"
                                                         className="p-button-sm p-button-text text-red-500"
-                                                        onClick={() => {
-                                                            setNewContactPhones(newContactPhones.filter((_, i) => i !== index));
-                                                        }}
+                                                        onClick={() => setNewContactPhones(newContactPhones.filter((_, i) => i !== index))}
                                                     />
                                                 </li>
                                             ))}
@@ -236,120 +282,106 @@ function AddEventModal({
                             </div>
                         )}
                     </div>
+
+                    {/* Dynamic fields */}
                     <div className='flex flex-wrap gap-3'>
-                    {sortedFields.filter((e)=>isAdmin || e.FIELD_NAME === 'UF_CRM_1749479746448' || e.FIELD_NAME === 'UF_CRM_1749539326485').map(field => {
-                        const {
-                            FIELD_NAME,
-                            USER_TYPE_ID,
-                            MULTIPLE,
-                            SETTINGS,
-                            LIST,
-                            title,
-                            MANDATORY
-                        } = field;
-                        const value = formData[FIELD_NAME];
-                        return (
-                            <div key={FIELD_NAME} className="row-filed">
-                                {title && (
-                                    <label className={`block mb-1 ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-lg' : ''}`}>
-                                        {title}
-                                        {MANDATORY === 'Y' && <span className="text-red-500"> *</span>}
-                                    </label>
-                                )}
-                                {USER_TYPE_ID === 'enumeration' ? (
-                                    MULTIPLE === 'Y' ? (
-                                        <MultiSelect
-                                            value={value || []}
-                                            options={LIST || []}
-                                            optionLabel="VALUE"
-                                            placeholder="Select..."
-                                            className="w-full"
-                                            onChange={(e) => handleChange(FIELD_NAME, e.value)}
-                                        />
-                                    ) : (
-                                        <Dropdown
-                                            value={value}
-                                            options={LIST || []}
-                                            optionLabel="VALUE"
-                                            placeholder="Select..."
-                                            className={`w-full
-    ${FIELD_NAME === 'UF_CRM_1749479746448' ? `
-      font-bold text-xl 
-      border-8 border-red-600 
-      shadow-[0_0_20px_5px_rgba(220,38,38,0.7)] 
-      bg-red-50 
-      rounded-lg
-    ` : ''}
-  `}
-                                            onChange={(e) => handleChange(FIELD_NAME, e.value)}
-                                        />
-                                    )
-                                ) : USER_TYPE_ID === 'string' ? (
-                                    SETTINGS?.ROWS && SETTINGS.ROWS > 1 ? (
-                                        <InputTextarea
-
-                                            value={value || ''}
-                                            placeholder={title}
-                                            className="w-full"
-                                            rows={SETTINGS.ROWS}
-                                            onChange={(e) => handleChange(FIELD_NAME, e.target.value)}
-                                        />
-                                    ) : (
-                                        <InputText
-                                            value={value || ''}
-                                            placeholder={title}
-                                            className="w-full"
-                                            onChange={(e) => handleChange(FIELD_NAME, e.target.value)}
-                                        />
-                                    )
-                                ) : USER_TYPE_ID === 'boolean' ? (
-                                    <>
-                                        <Checkbox
-                                            checked={!!value}
-                                            onChange={(e) => handleChange(FIELD_NAME, e.checked)}
-                                        />
-                                        <label className="ml-2">Այո</label>
-                                    </>
-                                ) : USER_TYPE_ID === 'double' || USER_TYPE_ID === 'money' ? (
-                                    <InputNumber
-                                        value={value || ''}
-                                        placeholder={title}
-                                        className="w-full"
-                                        onChange={(e) => handleChange(FIELD_NAME, e.value)}
-                                    />
-                                ) : USER_TYPE_ID === 'file'? (
-                                    <FileUpload
-                                        name="file"
-                                        customUpload
-                                        auto
-                                        multiple={false}
-                                        chooseLabel="Ներբեռնել ֆայլ"
-                                        className="w-full"
-                                        onSelect={(e) => {
-                                            const file = e.files?.[0];
-                                            if (file) {
-                                                handleChange(FIELD_NAME, [file]);
-                                            }
-                                        }}
-                                        onClear={() => handleChange(FIELD_NAME, [])}
-                                    />
-
-                                ): null}
-                            </div>
-                        );
-                    })}
+                        {sortedFields
+                            .filter((e) => isAdmin || e.FIELD_NAME === 'UF_CRM_1749479746448' || e.FIELD_NAME === 'UF_CRM_1749539326485')
+                            .map(field => {
+                                const { FIELD_NAME, USER_TYPE_ID, MULTIPLE, SETTINGS, LIST, title, MANDATORY } = field;
+                                const value = formData[FIELD_NAME];
+                                return (
+                                    <div key={FIELD_NAME} className="row-filed">
+                                        {title && (
+                                            <label className={`block mb-1 ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-lg' : ''}`}>
+                                                {title}
+                                                {MANDATORY === 'Y' && <span className="text-red-500"> *</span>}
+                                            </label>
+                                        )}
+                                        {USER_TYPE_ID === 'enumeration' ? (
+                                            MULTIPLE === 'Y' ? (
+                                                <MultiSelect
+                                                    value={value || []}
+                                                    options={LIST || []}
+                                                    optionLabel="VALUE"
+                                                    placeholder="Select..."
+                                                    className="w-full"
+                                                    onChange={(e) => handleChange(FIELD_NAME, e.value)}
+                                                />
+                                            ) : (
+                                                <Dropdown
+                                                    value={value}
+                                                    options={LIST || []}
+                                                    optionLabel="VALUE"
+                                                    placeholder="Select..."
+                                                    className={`w-full ${FIELD_NAME === 'UF_CRM_1749479746448' ? 'font-bold text-xl border-8 border-red-600 shadow-[0_0_20px_5px_rgba(220,38,38,0.7)] bg-red-50 rounded-lg' : ''}`}
+                                                    onChange={(e) => handleChange(FIELD_NAME, e.value)}
+                                                />
+                                            )
+                                        ) : USER_TYPE_ID === 'string' ? (
+                                            SETTINGS?.ROWS && SETTINGS.ROWS > 1 ? (
+                                                <InputTextarea
+                                                    value={value || ''}
+                                                    placeholder={title}
+                                                    className="w-full"
+                                                    rows={SETTINGS.ROWS}
+                                                    onChange={(e) => handleChange(FIELD_NAME, e.target.value)}
+                                                />
+                                            ) : (
+                                                <InputText
+                                                    value={value || ''}
+                                                    placeholder={title}
+                                                    className="w-full"
+                                                    onChange={(e) => handleChange(FIELD_NAME, e.target.value)}
+                                                />
+                                            )
+                                        ) : USER_TYPE_ID === 'boolean' ? (
+                                            <>
+                                                <Checkbox
+                                                    checked={!!value}
+                                                    onChange={(e) => handleChange(FIELD_NAME, e.checked)}
+                                                />
+                                                <label className="ml-2">Այո</label>
+                                            </>
+                                        ) : USER_TYPE_ID === 'double' || USER_TYPE_ID === 'money' ? (
+                                            <InputNumber
+                                                value={value || ''}
+                                                placeholder={title}
+                                                className="w-full"
+                                                onChange={(e) => handleChange(FIELD_NAME, e.value)}
+                                            />
+                                        ) : USER_TYPE_ID === 'file' ? (
+                                            <FileUpload
+                                                name="file"
+                                                customUpload
+                                                auto
+                                                multiple={false}
+                                                chooseLabel="Ներբեռնել ֆայլ"
+                                                className="w-full"
+                                                onSelect={(e) => {
+                                                    const file = e.files?.[0];
+                                                    if (file) handleChange(FIELD_NAME, [file]);
+                                                }}
+                                                onClear={() => handleChange(FIELD_NAME, [])}
+                                            />
+                                        ) : null}
+                                    </div>
+                                );
+                            })}
                     </div>
+
+                    {/* Submit */}
                     <div>
                         <Button
                             loading={btnLoading}
                             disabled={btnLoading}
                             label="Ամրագրել"
                             icon="pi pi-save"
-                            onClick={ async () => {
-                                setBtnLoading(true)
+                            onClick={async () => {
+                                setBtnLoading(true);
                                 const missingRequired = sortedFields
                                     .filter(field => field.MANDATORY === 'Y' && field.USER_TYPE_ID !== 'datetime')
-                                    .filter((e)=>isAdmin || e.ID === '238' || e.ID === '234')
+                                    .filter((e) => isAdmin || e.ID === '238' || e.ID === '234')
                                     .some(field => {
                                         const value = formData[field.FIELD_NAME];
                                         return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
@@ -362,8 +394,10 @@ function AddEventModal({
                                         detail: 'Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը։',
                                         life: 3000
                                     });
+                                    setBtnLoading(false);
                                     return;
                                 }
+
                                 if (!isNewContact && !selectedContact && isAdmin) {
                                     if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48' && formData?.UF_CRM_1749479746448?.ID !== '46') {
                                         toast.current.show({
@@ -372,39 +406,43 @@ function AddEventModal({
                                             detail: 'Խնդրում ենք նշել հաճախորդ',
                                             life: 3000
                                         });
+                                        setBtnLoading(false);
                                         return;
                                     }
                                 }
+
                                 if (isNewContact && (!newContactName || newContactPhones.length === 0) && isAdmin) {
-                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48' && formData?.UF_CRM_1749479746448?.ID !== '46'){
+                                    if (formData?.UF_CRM_1749479746448?.ID !== '44' && formData?.UF_CRM_1749479746448?.ID !== '48' && formData?.UF_CRM_1749479746448?.ID !== '46') {
                                         toast.current.show({
                                             severity: 'error',
                                             summary: 'Սխալ',
                                             detail: 'Խնդրում ենք նշել հաճախորդի անունը եւ հեռախոս',
                                             life: 3000
                                         });
+                                        setBtnLoading(false);
                                         return;
                                     }
                                 }
+
                                 await handleAddEvent({
                                     startTime: newEventStart,
                                     endTime: newEventEnd,
                                     ...formData,
+                                    persons,
                                     isNewContact,
                                     CONTACT_ID: selectedContact?.ID,
-                                    contact_name:isAdmin ? (isNewContact ? newContactName : selectedContact?.FULL_NAME) : null,
-                                    contact_phone:isAdmin ? (isNewContact ? newContactPhones : selectedContact?.PHONE) : null,
+                                    contact_name: isAdmin ? (isNewContact ? newContactName : selectedContact?.FULL_NAME) : null,
+                                    contact_phone: isAdmin ? (isNewContact ? newContactPhones : selectedContact?.PHONE) : null,
+                                    ASSIGNED_BY_ID: isAdmin ? selectedUser : user,
                                 });
                                 setBtnLoading(false);
                             }}
                             className="w-full"
                         />
-
                     </div>
                 </div>
             </Dialog>
         </>
-
     );
 }
 

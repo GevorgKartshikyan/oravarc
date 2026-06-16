@@ -11,7 +11,8 @@ export const formatResources = (allSmartProcess, allContacts) => {
             id: item.ID,
             opportunity: item.OPPORTUNITY,
             contact,
-            NAME:item.TITLE
+            NAME:item.TITLE,
+            rules:item.UF_CRM_1781007389884 ? JSON.parse(item.UF_CRM_1781007389884) : null,
         };
     });
 };
